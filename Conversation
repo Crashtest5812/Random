@@ -1,11 +1,9 @@
+import time
+
 print("Hello! Welcome to Conner-side Cafe.")
-import time
-
-time.sleep(3)  # Pause for 2 seconds
+time.sleep(3)
 print("We have a variety of drinks and snacks for you to enjoy. What would you like to order today?")
-import time
-
-time.sleep(2)  # Pause for 1 seconds
+time.sleep(2)
 menu = {
 	"1": "Coffee",
 	"2": "Tea",
@@ -21,59 +19,64 @@ prices = {
 for order_number, item_name in menu.items():
 	print(f"{order_number}. {item_name} - ${prices[order_number]:.2f}")
 
-order_numbers = input("Enter item numbers separated by commas: ").split(",")
-ordered_items = []
-invalid_numbers = []
-order_total = 0.0
+while True:
+	order_numbers = input("Enter item numbers separated by commas: ").split(",")
+	ordered_items = []
+	invalid_numbers = []
+	order_total = 0.0
 
-for order_number in order_numbers:
-	order_number = order_number.strip()
-	if not order_number:
-		continue
+	for order_number in order_numbers:
+		order_number = order_number.strip()
+		if not order_number:
+			continue
 
-	item_name = menu.get(order_number)
-	if item_name:
-		ordered_items.append(item_name)
-		order_total += prices[order_number]
-	else:
-		invalid_numbers.append(order_number)
-
-if ordered_items:
-	print("So, I got a:", ", ".join(ordered_items))
-	print(f"Order total: ${order_total:.2f}")
-if invalid_numbers:
-	print("These item numbers are not on the menu:", ", ".join(invalid_numbers))
-if not ordered_items and not invalid_numbers:
-	print("You didn't enter any item numbers.")
-YesNo = input("Is that correct? (yes/no): ").strip().lower()
-if YesNo == "yes":
-	print("Great! Can I get your name for the order?")
-	import time
-	time.sleep(2)  # Pause for 2 seconds
-	name = input("Please enter your name: ")
-	print(f"Thank you, {name}! Your total is ${order_total:.2f}.")
-	payment_method = input("How would you like to pay? (cash/card): ").strip().lower()
-	if payment_method == "cash":
-		print("Please hand over the cash to the cashier on the left.")
-		payed = input("Did you hand over the cash? (yes/no): ").strip().lower()
-		if payed == "yes":
-			print("Thank you for your payment! Your order will be ready shortly.")
+		item_name = menu.get(order_number)
+		if item_name:
+			ordered_items.append(item_name)
+			order_total += prices[order_number]
 		else:
-			print("Please hand over the cash to the cashier to complete your order.")
-			YN = input("Pay? (yes/no): ").strip().lower()
-			if YN == "yes":
-				print("Thank you for your payment! Your order will be ready shortly.")
-			if YN == "no":
-				print("I'm calling the police, you are trying to steal from us!")
-	elif payment_method == "card":
-		print("Please swipe or insert your card at the terminal.")
-		swipe = input("Did you swipe or insert your card? (swipe/insert): ").strip().lower()
-		if swipe == "swipe":
-			print("Please swipe your card now.")
-		elif swipe == "insert":
-			print("Please insert your card now.")
+			invalid_numbers.append(order_number)
+
+	if ordered_items:
+		print("So, I got a:", ", ".join(ordered_items))
+		print(f"Order total: ${order_total:.2f}")
+	if invalid_numbers:
+		print("These item numbers are not on the menu:", ", ".join(invalid_numbers))
+	if not ordered_items and not invalid_numbers:
+		print("You didn't enter any item numbers.")
+
+	yes_no = input("Is that correct? (yes/no): ").strip().lower()
+	if yes_no == "yes":
+		break
+	if yes_no == "no":
+		print("No worries! Let's start over.")
+	else:
+		print("Please answer yes or no.")
+
+print("Great! Can I get your name for the order?")
+time.sleep(2)
+name = input("Please enter your name: ")
+print(f"Thank you, {name}! Your total is ${order_total:.2f}.")
+payment_method = input("How would you like to pay? (cash/card): ").strip().lower()
+if payment_method == "cash":
+	print("Please hand over the cash to the cashier on the left.")
+	payed = input("Did you hand over the cash? (yes/no): ").strip().lower()
+	if payed == "yes":
 		print("Thank you for your payment! Your order will be ready shortly.")
 	else:
-		print("Invalid payment method. Please try again.")
-if YesNo == "no":
-	print("No worries! Let's start over.")
+		print("Please hand over the cash to the cashier to complete your order.")
+		yn = input("Pay? (yes/no): ").strip().lower()
+		if yn == "yes":
+			print("Thank you for your payment! Your order will be ready shortly.")
+		if yn == "no":
+			print("I'm calling the police, you are trying to steal from us!")
+elif payment_method == "card":
+	print("Please swipe or insert your card at the terminal.")
+	swipe = input("Did you swipe or insert your card? (swipe/insert): ").strip().lower()
+	if swipe == "swipe":
+		print("Please swipe your card now.")
+	elif swipe == "insert":
+		print("Please insert your card now.")
+	print("Thank you for your payment! Your order will be ready shortly.")
+else:
+	print("Invalid payment method. Please try again.")
