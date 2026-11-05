@@ -42,14 +42,18 @@ while True:
 		print(f"Order total: ${order_total:.2f}")
 	if invalid_numbers:
 		print("These item numbers are not on the menu:", ", ".join(invalid_numbers))
+		print("Please enter valid item numbers.")
+		continue
 	if not ordered_items and not invalid_numbers:
 		print("You didn't enter any item numbers.")
+		continue
 
 	yes_no = input("Is that correct? (yes/no): ").strip().lower()
 	if yes_no == "yes":
 		break
 	if yes_no == "no":
 		print("No worries! Let's start over.")
+		continue
 	else:
 		print("Please answer yes or no.")
 
