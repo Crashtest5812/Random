@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0c0c">
+  <meta name="description" content="Run the Conner-side Cafe program in a terminal.">
+  <title>Conner-side Cafe — Terminal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: #0c0c0c;
+      color: #e6e6e6;
+      font-size: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; }
+    .terminal {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #101010;
+      border-inline: 1px solid #252525;
+    }
+    .terminal-header {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 16px;
+      border-bottom: 1px solid #292929;
+      color: #a5a5a5;
+      font-size: 12px;
+    }
+    .terminal-title { color: #dedede; }
+    .run-again {
+      border: 0;
+      padding: 5px 0 5px 10px;
+      background: transparent;
+      color: #a5a5a5;
+      cursor: pointer;
+      font: inherit;
+    }
+    .run-again:hover, .run-again:focus-visible { color: #fff; }
+    .screen {
+      flex: 1;
+      padding: 20px 18px;
+      overflow: auto;
+    }
+    #output {
+      margin: 0;
+      color: #dedede;
+      font: inherit;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .input-line {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+      margin-top: 2px;
+      line-height: 1.65;
+    }
+    .input-prompt { flex: 0 0 auto; color: #a5a5a5; }
+    .terminal-input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      padding: 0;
+      background: transparent;
+      color: #e6e6e6;
+      caret-color: #e6e6e6;
+      font: inherit;
+    }
+    .terminal-input:focus-visible { outline: 1px solid #777; outline-offset: 3px; }
+    .terminal-input:disabled { opacity: 0.7; }
+    @media (max-width: 520px) {
+      :root { font-size: 13px; }
+      .screen { padding: 16px 12px; }
+      .terminal-header { padding-inline: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="terminal" aria-label="Conner-side Cafe code runner terminal">
+    <header class="terminal-header">
+      <span class="terminal-title">python cafe.py</span>
+      <button class="run-again" id="run-again" type="button">Run again</button>
+    </header>
+    <section class="screen" aria-label="Terminal output">
+      <pre id="output" aria-live="polite"></pre>
+      <form class="input-line" id="input-form" hidden>
+        <label class="input-prompt" id="input-prompt" for="terminal-input"></label>
+        <input class="terminal-input" id="terminal-input" type="text" autocomplete="off" spellcheck="false" aria-label="Terminal input">
+      </form>
+    </section>
+  </main>
+  <script>
+    const output = document.querySelector("#output");
+    const inputForm = document.querySelector("#input-form");
+    const inputPrompt = document.querySelector("#input-prompt");
+    const terminalInput = document.querySelector("#terminal-input");
+    const runAgain = document.querySelector("#run-again");
+    const screen = document.querySelector(".screen");
+    const menu = {
+      "1": { name: "Coffee", price: 2.5 },
+      "2": { name: "Tea", price: 2 },
+      "3": { name: "Sandwich", price: 3.5 },
+      "4": { name: "Cake", price: 6.25 },
+    };
+    let responseHandler;
+
+    function print(text = "") {
+      output.append(document.createTextNode(`${text}\n`));
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    function prompt(text, handler) {
+      inputPrompt.textContent = text;
+      responseHandler = handler;
+      inputForm.hidden = false;
+      terminalInput.disabled = false;
+      terminalInput.value = "";
+      terminalInput.focus();
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    function finish() {
+      inputForm.hidden = true;
+      terminalInput.disabled = true;
+      runAgain.focus();
+    }
+
+    function money(amount) {
+      return `$${amount.toFixed(2)}`;
+    }
+
+    function start() {
+      output.textContent = "";
+      print("$ python cafe.py");
+      print("Hello! Welcome to Conner-side Cafe.");
+      print("We have a variety of drinks and snacks for you to enjoy. What would you like to order today?");
+      for (const [number, item] of Object.entries(menu)) {
+        print(`${number}. ${item.name} - ${money(item.price)}`);
+      }
+
+      prompt("Enter item numbers separated by commas: ", (answer) => {
+        const orderedItems = [];
+        const invalidNumbers = [];
+        let orderTotal = 0;
+
+        for (const rawNumber of answer.split(",")) {
+          const number = rawNumber.trim();
+          if (!number) continue;
+          if (menu[number]) {
+            orderedItems.push(menu[number].name);
+            orderTotal += menu[number].price;
+          } else {
+            invalidNumbers.push(number);
+          }
+        }
+
+        if (orderedItems.length) {
+          print(`So, I got a: ${orderedItems.join(", ")}`);
+          print(`Order total: ${money(orderTotal)}`);
+        }
+        if (invalidNumbers.length) {
+          print(`These item numbers are not on the menu: ${invalidNumbers.join(", ")}`);
+        }
+        if (!orderedItems.length && !invalidNumbers.length) {
+          print("You didn't enter any item numbers.");
+        }
+
+        prompt("Is that correct? (yes/no): ", (confirmation) => {
+          if (confirmation.trim().toLowerCase() === "yes") {
+            print("Great! Can I get your name for the order?");
+            prompt("Please enter your name: ", (name) => {
+              print(`Thank you, ${name}! Your total is ${money(orderTotal)}.`);
+              prompt("How would you like to pay? (cash/card): ", (payment) => {
+                const method = payment.trim().toLowerCase();
+                if (method === "cash") {
+                  print("Please hand over the cash to the cashier on the left.");
+                  prompt("Did you hand over the cash? (yes/no): ", (paid) => {
+                    if (paid.trim().toLowerCase() === "yes") {
+                      print("Thank you for your payment! Your order will be ready shortly.");
+                      finish();
+                    } else {
+                      print("Please hand over the cash to the cashier to complete your order.");
+                      prompt("Pay? (yes/no): ", (payAgain) => {
+                        if (payAgain.trim().toLowerCase() === "yes") {
+                          print("Thank you for your payment! Your order will be ready shortly.");
+                        } else if (payAgain.trim().toLowerCase() === "no") {
+                          print("I'm calling the police, you are trying to steal from us!");
+                        }
+                        finish();
+                      });
+                    }
+                  });
+                } else if (method === "card") {
+                  print("Please swipe or insert your card at the terminal.");
+                  prompt("Did you swipe or insert your card? (swipe/insert): ", (cardAction) => {
+                    const action = cardAction.trim().toLowerCase();
+                    if (action === "swipe") print("Please swipe your card now.");
+                    else if (action === "insert") print("Please insert your card now.");
+                    print("Thank you for your payment! Your order will be ready shortly.");
+                    finish();
+                  });
+                } else {
+                  print("Invalid payment method. Please try again.");
+                  finish();
+                }
+              });
+            });
+          } else if (confirmation.trim().toLowerCase() === "no") {
+            print("No worries! Let's start over.");
+            finish();
+          } else {
+            finish();
+          }
+        });
+      });
+    }
+
+    inputForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!responseHandler) return;
+      const answer = terminalInput.value;
+      const handler = responseHandler;
+      responseHandler = undefined;
+      print(`${inputPrompt.textContent}${answer}`);
+      inputForm.hidden = true;
+      terminalInput.disabled = true;
+      handler(answer);
+    });
+
+    runAgain.addEventListener("click", start);
+    start();
+  </script>
+</body>
+</html>
