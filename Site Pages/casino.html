@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101510">
+  <meta name="description" content="Play slots, Blackjack, Roulette, Bingo, Craps, and poker at the Random Projects browser casino.">
+  <title>Casino — Random Projects</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font: 14px "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: #0c100d;
+      color: #e6eee8;
+      --paper: #111713;
+      --line: #34443a;
+      --muted: #a0afa5;
+      --accent: #9bd6a3;
+      --felt: #174531;
+    }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; background: radial-gradient(ellipse at top, #18372e, #0c100d 60%); }
+    button, input, select { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    button { cursor: pointer; }
+    .casino { width: min(100%, 980px); min-height: 100vh; margin: 0 auto; border-inline: 1px solid #29352d; background: var(--paper); }
+    .topbar { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 22px; border-bottom: 1px solid #29352d; color: var(--muted); font-size: 12px; }
+    .home-link { color: var(--muted); text-decoration: none; }
+    .home-link:hover { color: white; }
+    .screen { width: min(100%, 800px); margin: auto; padding: 30px 26px 52px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 0; font: 700 clamp(32px, 7vw, 52px)/1.05 "Space Grotesk", "Trebuchet MS", sans-serif; letter-spacing: -.05em; }
+    .intro { margin: 12px 0 20px; color: var(--muted); line-height: 1.65; }
+    .bankroll { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #526b56; padding: 12px 15px; background: #18251b; color: #d3f0d3; }
+    .bankroll strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+    .reset { border: 1px solid #526b56; padding: 7px 10px; background: #111713; color: #d3f0d3; }
+    .game-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 18px 0 0; }
+    .game-tab { min-height: 39px; border: 1px solid var(--line); background: #151d18; color: #c1ccc4; }
+    .game-tab:hover, .game-tab[aria-pressed="true"] { border-color: var(--accent); background: #1b2b20; color: #d3f0d3; }
+    .game-panel { margin-top: 16px; border: 1px solid #3b5645; padding: 20px; background: radial-gradient(ellipse at top, #1c4935, #12251a 80%); }
+    .game-panel[hidden] { display: none; }
+    h2 { margin: 0 0 7px; color: #f0f7f1; font: 600 23px/1.2 "Space Grotesk", "Trebuchet MS", sans-serif; }
+    .game-description { margin: 0 0 18px; color: #c0cec3; font-size: 12px; line-height: 1.6; }
+    .form-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+    .field { display: grid; flex: 1 1 155px; gap: 7px; color: #c0cec3; font-size: 12px; }
+    .field input, .field select { width: 100%; min-height: 40px; border: 1px solid #536459; padding: 8px 10px; background: #101713; color: #f0f7f1; }
+    .action { min-height: 40px; border: 1px solid var(--accent); padding: 9px 13px; background: #1a2c20; color: #d3f0d3; }
+    .action:hover:not(:disabled) { background: #28412f; }
+    .action:disabled { cursor: not-allowed; opacity: .5; }
+    .output { min-height: 1.5em; margin: 16px 0 0; color: var(--accent); line-height: 1.6; }
+    .output:empty { display: none; }
+    .visual { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 17px; }
+    .visual:empty { display: none; }
+    .reel, .die, .ball {
+      display: grid; min-width: 62px; min-height: 62px; place-items: center;
+      border: 1px solid #9bd6a3; border-radius: 7px; background: #eef4ed;
+      color: #1a281d; font-size: 24px; font-weight: 700;
+    }
+    .die { width: 58px; min-width: 58px; min-height: 58px; font-size: 28px; }
+    .ball { min-width: 42px; min-height: 42px; border-radius: 50%; font-size: 15px; }
+    .cards { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .playing-card {
+      display: grid; width: 59px; height: 82px; align-content: space-between;
+      border: 1px solid #ddd; border-radius: 5px; padding: 6px;
+      background: #f5f2e9; color: #222; text-align: left;
+      box-shadow: 0 3px 8px rgb(0 0 0 / 25%);
+    }
+    button.playing-card[aria-pressed="true"] { border: 2px solid #ffca64; transform: translateY(-4px); }
+    .playing-card.red { color: #ba2e36; }
+    .card-rank { font-size: 16px; font-weight: 700; }
+    .card-suit { justify-self: center; align-self: center; font-size: 24px; }
+    .hand { margin-top: 18px; }
+    .hand h3 { margin: 0; color: #c4d2c7; font-size: 12px; font-weight: 400; }
+    .small-note { margin: 8px 0 0; color: #c0cec3; font-size: 12px; }
+    .bingo-card { display: grid; grid-template-columns: repeat(5, minmax(38px, 1fr)); gap: 5px; max-width: 420px; margin-top: 16px; }
+    .bingo-cell { display: grid; min-height: 42px; place-items: center; border: 1px solid #789080; background: #e7efe8; color: #14251a; font-weight: 700; }
+    .bingo-cell.marked { background: #b6e4bc; border-color: #e1ffe4; }
+    .bingo-head { background: #1c2b20; color: #d3f0d3; }
+    .rule-note { margin: 20px 0 0; border-top: 1px solid #29352d; padding-top: 14px; color: #95a49a; font-size: 11px; line-height: 1.6; }
+    @media (max-width: 560px) {
+      .topbar { padding-inline: 14px; }
+      .screen { padding: 24px 14px 36px; }
+      .game-nav { grid-template-columns: repeat(2, 1fr); }
+      .game-panel { padding: 15px; }
+      .form-row { align-items: stretch; }
+      .form-row .action { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="casino">
+    <header class="topbar">
+      <span>RANDOM PROJECTS / CASINO</span>
+      <a class="home-link" href="./index.html">← All projects</a>
+    </header>
+    <section class="screen" aria-labelledby="page-title">
+      <p class="eyebrow">Play-money games</p>
+      <h1 id="page-title">Welcome to the Casino</h1>
+      <p class="intro">Pick a table and play. Games are bundled here in one place, and the chips are only for fun—there are no real-money bets.</p>
+      <div class="bankroll" aria-live="polite">
+        <span>Play-money chips</span>
+        <strong><span id="balance">100</span> chips</strong>
+        <button class="reset" id="reset-balance" type="button">Reset chips</button>
+      </div>
+
+      <nav class="game-nav" aria-label="Choose a casino game" role="group">
+        <button class="game-tab" type="button" data-game="slots" aria-pressed="true">Slots</button>
+        <button class="game-tab" type="button" data-game="blackjack" aria-pressed="false">Blackjack</button>
+        <button class="game-tab" type="button" data-game="roulette" aria-pressed="false">Roulette</button>
+        <button class="game-tab" type="button" data-game="bingo" aria-pressed="false">Bingo</button>
+        <button class="game-tab" type="button" data-game="craps" aria-pressed="false">Craps</button>
+        <button class="game-tab" type="button" data-game="draw" aria-pressed="false">Five-card draw</button>
+        <button class="game-tab" type="button" data-game="holdem" aria-pressed="false">Texas Hold'em</button>
+      </nav>
+
+      <section class="game-panel" id="panel-slots" aria-labelledby="title-slots">
+        <h2 id="title-slots">Slot Machine</h2>
+        <p class="game-description">Place a play-money bet and spin three reels. Three matching symbols pay out.</p>
+        <div class="form-row">
+          <label class="field" for="slot-bet">Bet (1–100 chips)<input id="slot-bet" type="number" min="1" max="100" value="10"></label>
+          <button class="action" id="slot-spin" type="button">Spin reels</button>
+        </div>
+        <div class="visual" id="slot-result" aria-label="Slot machine result" aria-live="polite"></div>
+        <p class="output" id="slot-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="game-panel" id="panel-blackjack" aria-labelledby="title-blackjack" hidden>
+        <h2 id="title-blackjack">Blackjack</h2>
+        <p class="game-description">Get closer to 21 than the dealer without going over. Dealer stands on 17.</p>
+        <div class="form-row">
+          <label class="field" for="blackjack-bet">Bet (1–100 chips)<input id="blackjack-bet" type="number" min="1" max="100" value="10"></label>
+          <button class="action" id="blackjack-deal" type="button">Deal hand</button>
+          <button class="action" id="blackjack-hit" type="button" disabled>Hit</button>
+          <button class="action" id="blackjack-stand" type="button" disabled>Stand</button>
+        </div>
+        <div class="hand"><h3>Your hand</h3><div class="cards" id="blackjack-player"></div><p class="small-note" id="blackjack-player-total"></p></div>
+        <div class="hand"><h3>Dealer</h3><div class="cards" id="blackjack-dealer"></div><p class="small-note" id="blackjack-dealer-total"></p></div>
+        <p class="output" id="blackjack-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="game-panel" id="panel-roulette" aria-labelledby="title-roulette" hidden>
+        <h2 id="title-roulette">Roulette</h2>
+        <p class="game-description">Bet on a number or red/black. Number bets pay 35:1; color bets pay 1:1.</p>
+        <div class="form-row">
+          <label class="field" for="roulette-kind">Bet type<select id="roulette-kind"><option value="color">Color</option><option value="number">Number</option></select></label>
+          <label class="field" for="roulette-choice">Your pick<select id="roulette-choice"></select></label>
+          <label class="field" for="roulette-bet">Bet<input id="roulette-bet" type="number" min="1" max="100" value="10"></label>
+          <button class="action" id="roulette-spin" type="button">Spin wheel</button>
+        </div>
+        <div class="visual" id="roulette-result" aria-label="Roulette result" aria-live="polite"></div>
+        <p class="output" id="roulette-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="game-panel" id="panel-bingo" aria-labelledby="title-bingo" hidden>
+        <h2 id="title-bingo">Bingo</h2>
+        <p class="game-description">Get a complete row, column, or diagonal. The center square is free.</p>
+        <div class="form-row">
+          <button class="action" id="bingo-start" type="button">New card</button>
+          <button class="action" id="bingo-call" type="button" disabled>Call next number</button>
+        </div>
+        <p class="output" id="bingo-message" role="status" aria-live="polite"></p>
+        <div class="bingo-card" id="bingo-card" aria-label="Bingo card"></div>
+        <p class="small-note" id="bingo-called"></p>
+      </section>
+
+      <section class="game-panel" id="panel-craps" aria-labelledby="title-craps" hidden>
+        <h2 id="title-craps">Craps</h2>
+        <p class="game-description">On the come-out roll, 7 or 11 wins and 2, 3, or 12 loses. Otherwise hit your point before a 7.</p>
+        <div class="form-row"><button class="action" id="craps-roll" type="button">Roll dice</button></div>
+        <div class="visual" id="craps-dice" aria-label="Dice result" aria-live="polite"></div>
+        <p class="output" id="craps-message" role="status" aria-live="polite">Start a round with a roll.</p>
+      </section>
+
+      <section class="game-panel" id="panel-draw" aria-labelledby="title-draw" hidden>
+        <h2 id="title-draw">Five-card draw</h2>
+        <p class="game-description">Draw a hand, select any cards to replace, then keep your hand or fold. Hand rankings are shown for fun.</p>
+        <div class="form-row"><button class="action" id="draw-deal" type="button">Deal hand</button><button class="action" id="draw-replace" type="button" disabled>Replace selected</button><button class="action" id="draw-keep" type="button" disabled>Keep hand</button><button class="action" id="draw-fold" type="button" disabled>Fold</button></div>
+        <div class="cards" id="draw-cards"></div>
+        <p class="output" id="draw-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="game-panel" id="panel-holdem" aria-labelledby="title-holdem" hidden>
+        <h2 id="title-holdem">Texas Hold'em</h2>
+        <p class="game-description">Your best five-card hand is compared with the house using two hole cards and five community cards.</p>
+        <div class="form-row"><button class="action" id="holdem-deal" type="button">Deal table</button><button class="action" id="holdem-showdown" type="button" disabled>Showdown</button></div>
+        <div class="hand"><h3>Your hole cards</h3><div class="cards" id="holdem-player"></div></div>
+        <div class="hand"><h3>Community cards</h3><div class="cards" id="holdem-board"></div></div>
+        <div class="hand" id="holdem-house-section" hidden><h3>House hole cards</h3><div class="cards" id="holdem-house"></div></div>
+        <p class="output" id="holdem-message" role="status" aria-live="polite"></p>
+      </section>
+      <p class="rule-note">All games use virtual chips. Reset the chip balance at any time. Poker evaluator compares standard five-card hand rankings.</p>
+    </section>
+  </main>
+  <script>
+    const balanceOutput = document.querySelector("#balance");
+    const tabs = [...document.querySelectorAll(".game-tab")];
+    let balance = 100;
+    let cardDeck = [];
+    let blackjackPlayer = [];
+    let blackjackDealer = [];
+    let blackjackBet = 0;
+    let blackjackActive = false;
+    let bingo = null;
+    let crapsPoint = null;
+    let crapsActive = false;
+    let drawHand = [];
+    let drawActive = false;
+    let drawExchanged = false;
+    let holdemPlayer = [];
+    let holdemHouse = [];
+    let holdemBoard = [];
+
+    function setBalance(nextBalance) {
+      balance = nextBalance;
+      balanceOutput.textContent = String(balance);
+    }
+
+    function readBet(selector) {
+      const bet = Number(document.querySelector(selector).value);
+      if (!Number.isInteger(bet) || bet < 1 || bet > 100) return null;
+      if (bet > balance) return null;
+      return bet;
+    }
+
+    function setMessage(selector, text) {
+      document.querySelector(selector).textContent = text;
+    }
+
+    function setPanel(game) {
+      for (const tab of tabs) {
+        const selected = tab.dataset.game === game;
+        tab.setAttribute("aria-pressed", String(selected));
+        document.querySelector(`#panel-${tab.dataset.game}`).hidden = !selected;
+      }
+    }
+
+    for (const tab of tabs) tab.addEventListener("click", () => setPanel(tab.dataset.game));
+    document.querySelector("#reset-balance").addEventListener("click", () => setBalance(100));
+
+    function renderVisual(selector, values, className = "reel") {
+      const container = document.querySelector(selector);
+      container.replaceChildren();
+      for (const value of values) {
+        const item = document.createElement("span");
+        item.className = className;
+        item.textContent = String(value);
+        container.append(item);
+      }
+    }
+
+    function randomInteger(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    document.querySelector("#slot-spin").addEventListener("click", () => {
+      const bet = readBet("#slot-bet");
+      if (bet === null) return setMessage("#slot-message", "Enter a whole-number bet within your chip balance.");
+      const symbols = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "7️⃣"];
+      const reels = Array.from({ length: 3 }, () => symbols[randomInteger(0, symbols.length - 1)]);
+      const payout = reels.every((symbol) => symbol === reels[0])
+        ? ({ "🍒": 10, "7️⃣": 100, "🔔": 50 }[reels[0]] || 0) * bet
+        : 0;
+      setBalance(balance - bet + payout);
+      renderVisual("#slot-result", reels);
+      setMessage("#slot-message", payout ? `Three in a row! Won ${payout} chips.` : `No match. Lost ${bet} chips.`);
+    });
+
+    const suitList = [
+      { name: "Hearts", symbol: "♥", color: "red" },
+      { name: "Diamonds", symbol: "♦", color: "red" },
+      { name: "Clubs", symbol: "♣", color: "black" },
+      { name: "Spades", symbol: "♠", color: "black" },
+    ];
+    const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+    const rankValues = Object.fromEntries(ranks.map((rank, index) => [rank, index + 2]));
+    const handNames = ["High Card", "Pair", "Two Pair", "Three of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush"];
+
+    function freshDeck() {
+      const cards = suitList.flatMap((suit) => ranks.map((rank) => ({ rank, ...suit })));
+      for (let index = cards.length - 1; index > 0; index -= 1) {
+        const swap = randomInteger(0, index);
+        [cards[index], cards[swap]] = [cards[swap], cards[index]];
+      }
+      return cards;
+    }
+
+    function takeCards(count) {
+      return cardDeck.splice(0, count);
+    }
+
+    function renderCards(selector, cards, selectable = false) {
+      const container = document.querySelector(selector);
+      container.replaceChildren();
+      for (const [index, card] of cards.entries()) {
+        const element = selectable ? document.createElement("button") : document.createElement("span");
+        element.className = `playing-card ${card.color}`;
+        if (selectable) {
+          element.type = "button";
+          element.dataset.cardIndex = String(index);
+          element.setAttribute("aria-label", `${card.rank} of ${card.name}, select to discard`);
+          element.setAttribute("aria-pressed", "false");
+          element.addEventListener("click", () => element.setAttribute("aria-pressed", String(element.getAttribute("aria-pressed") !== "true")));
+        }
+        const rank = document.createElement("span");
+        rank.className = "card-rank";
+        rank.textContent = card.rank;
+        const suit = document.createElement("span");
+        suit.className = "card-suit";
+        suit.setAttribute("aria-hidden", "true");
+        suit.textContent = card.symbol;
+        element.append(rank, suit);
+        container.append(element);
+      }
+    }
+
+    function cardValue(card) {
+      return card.rank === "A" ? 11 : ["K", "Q", "J"].includes(card.rank) ? 10 : Number(card.rank);
+    }
+
+    function blackjackTotal(hand) {
+      let total = hand.reduce((sum, card) => sum + cardValue(card), 0);
+      let aces = hand.filter((card) => card.rank === "A").length;
+      while (total > 21 && aces > 0) {
+        total -= 10;
+        aces -= 1;
+      }
+      return total;
+    }
+
+    function renderBlackjack() {
+      renderCards("#blackjack-player", blackjackPlayer);
+      renderCards("#blackjack-dealer", blackjackDealer);
+      document.querySelector("#blackjack-player-total").textContent = blackjackPlayer.length ? `Total: ${blackjackTotal(blackjackPlayer)}` : "";
+      document.querySelector("#blackjack-dealer-total").textContent = blackjackDealer.length ? `Total: ${blackjackTotal(blackjackDealer)}` : "";
+    }
+
+    function blackjackFinish(result) {
+      blackjackActive = false;
+      document.querySelector("#blackjack-deal").disabled = false;
+      document.querySelector("#blackjack-hit").disabled = true;
+      document.querySelector("#blackjack-stand").disabled = true;
+      if (result === "win") {
+        const natural = blackjackPlayer.length === 2 && blackjackTotal(blackjackPlayer) === 21;
+        const payout = blackjackBet * (natural ? 2.5 : 2);
+        setBalance(balance + payout);
+        setMessage("#blackjack-message", `You win${natural ? " with a natural blackjack" : ""} and receive ${payout} chips.`);
+      } else if (result === "push") {
+        setBalance(balance + blackjackBet);
+        setMessage("#blackjack-message", "Push. Your bet is returned.");
+      } else {
+        setMessage("#blackjack-message", "Dealer wins this hand.");
+      }
+      renderBlackjack();
+    }
+
+    document.querySelector("#blackjack-deal").addEventListener("click", () => {
+      const bet = readBet("#blackjack-bet");
+      if (bet === null) return setMessage("#blackjack-message", "Enter a whole-number bet within your chip balance.");
+      blackjackBet = bet;
+      setBalance(balance - bet);
+      document.querySelector("#blackjack-deal").disabled = true;
+      cardDeck = freshDeck();
+      blackjackPlayer = takeCards(2);
+      blackjackDealer = takeCards(2);
+      blackjackActive = true;
+      document.querySelector("#blackjack-hit").disabled = false;
+      document.querySelector("#blackjack-stand").disabled = false;
+      setMessage("#blackjack-message", "");
+      renderBlackjack();
+      if (blackjackTotal(blackjackPlayer) === 21 || blackjackTotal(blackjackDealer) === 21) {
+        if (blackjackTotal(blackjackPlayer) === blackjackTotal(blackjackDealer)) blackjackFinish("push");
+        else blackjackFinish(blackjackTotal(blackjackPlayer) === 21 ? "win" : "lose");
+      }
+    });
+    document.querySelector("#blackjack-hit").addEventListener("click", () => {
+      if (!blackjackActive) return;
+      blackjackPlayer.push(...takeCards(1));
+      renderBlackjack();
+      if (blackjackTotal(blackjackPlayer) > 21) blackjackFinish("lose");
+    });
+    document.querySelector("#blackjack-stand").addEventListener("click", () => {
+      if (!blackjackActive) return;
+      while (blackjackTotal(blackjackDealer) < 17) blackjackDealer.push(...takeCards(1));
+      renderBlackjack();
+      const playerTotal = blackjackTotal(blackjackPlayer);
+      const dealerTotal = blackjackTotal(blackjackDealer);
+      blackjackFinish(dealerTotal > 21 || playerTotal > dealerTotal ? "win" : playerTotal === dealerTotal ? "push" : "lose");
+    });
+
+    const rouletteKind = document.querySelector("#roulette-kind");
+    const rouletteChoice = document.querySelector("#roulette-choice");
+    function updateRouletteChoices() {
+      const choices = rouletteKind.value === "color"
+        ? [["red", "Red"], ["black", "Black"]]
+        : Array.from({ length: 37 }, (_, number) => [String(number), String(number)]);
+      rouletteChoice.replaceChildren();
+      for (const [value, label] of choices) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        rouletteChoice.append(option);
+      }
+    }
+    rouletteKind.addEventListener("change", updateRouletteChoices);
+    updateRouletteChoices();
+    document.querySelector("#roulette-spin").addEventListener("click", () => {
+      const bet = readBet("#roulette-bet");
+      if (bet === null) return setMessage("#roulette-message", "Enter a whole-number bet within your chip balance.");
+      const number = randomInteger(0, 36);
+      const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+      const color = number === 0 ? "green" : redNumbers.has(number) ? "red" : "black";
+      const won = rouletteKind.value === "color" ? rouletteChoice.value === color : Number(rouletteChoice.value) === number;
+      const payout = won ? bet * (rouletteKind.value === "number" ? 36 : 2) : 0;
+      setBalance(balance - bet + payout);
+      renderVisual("#roulette-result", [number, color[0].toUpperCase() + color.slice(1)], "ball");
+      setMessage("#roulette-message", won ? `Winner! You receive ${payout} chips.` : `No win. The ball landed on ${number} (${color}).`);
+    });
+
+    function bingoHasWon() {
+      const lines = [...bingo.card];
+      for (let column = 0; column < 5; column += 1) lines.push(bingo.card.map((row) => row[column]));
+      lines.push(bingo.card.map((row, index) => row[index]));
+      lines.push(bingo.card.map((row, index) => row[4 - index]));
+      const marked = new Set(bingo.called);
+      return lines.some((line) => line.every((value) => value === "FREE" || marked.has(value)));
+    }
+
+    function renderBingo() {
+      const card = document.querySelector("#bingo-card");
+      card.replaceChildren();
+      for (const letter of ["B", "I", "N", "G", "O"]) {
+        const head = document.createElement("span");
+        head.className = "bingo-cell bingo-head";
+        head.textContent = letter;
+        card.append(head);
+      }
+      for (let row = 0; row < 5; row += 1) {
+        for (let column = 0; column < 5; column += 1) {
+          const value = bingo.card[row][column];
+          const cell = document.createElement("span");
+          cell.className = `bingo-cell${value === "FREE" || bingo.called.includes(value) ? " marked" : ""}`;
+          cell.textContent = String(value);
+          card.append(cell);
+        }
+      }
+      document.querySelector("#bingo-called").textContent = bingo.called.length ? `Called: ${bingo.called.join(", ")}` : "No numbers called yet.";
+    }
+
+    document.querySelector("#bingo-start").addEventListener("click", () => {
+      const columns = [
+        Array.from({ length: 15 }, (_, index) => index + 1),
+        Array.from({ length: 15 }, (_, index) => index + 16),
+        Array.from({ length: 15 }, (_, index) => index + 31),
+        Array.from({ length: 15 }, (_, index) => index + 46),
+        Array.from({ length: 15 }, (_, index) => index + 61),
+      ];
+      const shuffledColumns = columns.map((values) => values.sort(() => Math.random() - 0.5).slice(0, 5));
+      const card = Array.from({ length: 5 }, (_, row) => shuffledColumns.map((column) => column[row]));
+      card[2][2] = "FREE";
+      bingo = {
+        card,
+        remaining: Array.from({ length: 75 }, (_, index) => index + 1).sort(() => Math.random() - 0.5),
+        called: [],
+      };
+      document.querySelector("#bingo-call").disabled = false;
+      setMessage("#bingo-message", "New card ready. Call numbers until you get a line.");
+      renderBingo();
+    });
+    document.querySelector("#bingo-call").addEventListener("click", () => {
+      if (!bingo || !bingo.remaining.length) return;
+      const number = bingo.remaining.pop();
+      bingo.called.push(number);
+      renderBingo();
+      if (bingoHasWon()) {
+        setMessage("#bingo-message", `Bingo! Number ${number} completed a line.`);
+        document.querySelector("#bingo-call").disabled = true;
+      } else if (bingo.called.length === 75) {
+        setMessage("#bingo-message", "All numbers have been called.");
+        document.querySelector("#bingo-call").disabled = true;
+      } else {
+        setMessage("#bingo-message", `Called ${number}. Keep going.`);
+      }
+    });
+
+    document.querySelector("#craps-roll").addEventListener("click", () => {
+      const dice = [randomInteger(1, 6), randomInteger(1, 6)];
+      const total = dice[0] + dice[1];
+      renderVisual("#craps-dice", dice, "die");
+      if (!crapsActive) {
+        if ([7, 11].includes(total)) {
+          setMessage("#craps-message", `Come-out ${total}: natural, you win! Roll to start another round.`);
+        } else if ([2, 3, 12].includes(total)) {
+          setMessage("#craps-message", `Come-out ${total}: craps, you lose. Roll to start another round.`);
+        } else {
+          crapsPoint = total;
+          crapsActive = true;
+          setMessage("#craps-message", `Point is ${crapsPoint}. Roll it again before a 7.`);
+        }
+        return;
+      }
+      if (total === crapsPoint) {
+        crapsActive = false;
+        setMessage("#craps-message", `You hit ${crapsPoint} and win! Roll to start another round.`);
+      } else if (total === 7) {
+        crapsActive = false;
+        setMessage("#craps-message", "Seven out—you lose. Roll to start another round.");
+      } else {
+        setMessage("#craps-message", `Rolled ${total}. Point remains ${crapsPoint}.`);
+      }
+    });
+
+    function scoreFive(cards) {
+      const values = cards.map((card) => rankValues[card.rank]).sort((a, b) => b - a);
+      const counts = new Map();
+      for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
+      const groups = [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+      const flush = cards.every((card) => card.name === cards[0].name);
+      const unique = [...new Set(values)].sort((a, b) => a - b);
+      const straight = unique.length === 5 && (unique[4] - unique[0] === 4 || unique.join(",") === "2,3,4,5,14");
+      const straightHigh = unique.join(",") === "2,3,4,5,14" ? 5 : unique[4];
+      if (flush && straight) return [8, straightHigh];
+      if (groups[0][1] === 4) return [7, groups[0][0], groups[1][0]];
+      if (groups[0][1] === 3 && groups[1][1] === 2) return [6, groups[0][0], groups[1][0]];
+      if (flush) return [5, ...values];
+      if (straight) return [4, straightHigh];
+      if (groups[0][1] === 3) return [3, groups[0][0], ...groups.slice(1).map(([value]) => value).sort((a, b) => b - a)];
+      if (groups[0][1] === 2 && groups[1][1] === 2) return [2, ...groups.slice(0, 2).map(([value]) => value).sort((a, b) => b - a), groups[2][0]];
+      if (groups[0][1] === 2) return [1, groups[0][0], ...groups.slice(1).map(([value]) => value).sort((a, b) => b - a)];
+      return [0, ...values];
+    }
+
+    function combinations(cards, size) {
+      if (size === 0) return [[]];
+      if (cards.length < size) return [];
+      const [first, ...rest] = cards;
+      return [...combinations(rest, size - 1).map((hand) => [first, ...hand]), ...combinations(rest, size)];
+    }
+
+    function bestHand(cards) {
+      return combinations(cards, 5).map(scoreFive).sort(compareScores).at(-1);
+    }
+
+    function compareScores(left, right) {
+      for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+        const difference = (left[index] || 0) - (right[index] || 0);
+        if (difference) return difference;
+      }
+      return 0;
+    }
+
+    function handLabel(score) {
+      return handNames[score[0]];
+    }
+
+    document.querySelector("#draw-deal").addEventListener("click", () => {
+      cardDeck = freshDeck();
+      drawHand = takeCards(5);
+      drawActive = true;
+      drawExchanged = false;
+      renderCards("#draw-cards", drawHand, true);
+      document.querySelector("#draw-replace").disabled = false;
+      document.querySelector("#draw-keep").disabled = false;
+      document.querySelector("#draw-fold").disabled = false;
+      setMessage("#draw-message", "Select the cards you want to replace, if any.");
+    });
+    document.querySelector("#draw-replace").addEventListener("click", () => {
+      if (!drawActive || drawExchanged) return;
+      const indices = [...document.querySelector("#draw-cards").querySelectorAll('[aria-pressed="true"]')]
+        .map((card) => Number(card.dataset.cardIndex)).sort((a, b) => b - a);
+      for (const index of indices) drawHand.splice(index, 1);
+      drawHand.push(...takeCards(indices.length));
+      drawExchanged = true;
+      renderCards("#draw-cards", drawHand);
+      document.querySelector("#draw-replace").disabled = true;
+      setMessage("#draw-message", `Replaced ${indices.length}. Your hand: ${handLabel(scoreFive(drawHand))}. Keep it or fold.`);
+    });
+    function finishDraw(text) {
+      if (!drawActive) return;
+      drawActive = false;
+      document.querySelector("#draw-replace").disabled = true;
+      document.querySelector("#draw-keep").disabled = true;
+      document.querySelector("#draw-fold").disabled = true;
+      renderCards("#draw-cards", drawHand);
+      setMessage("#draw-message", text);
+    }
+    document.querySelector("#draw-keep").addEventListener("click", () => finishDraw(`You kept ${handLabel(scoreFive(drawHand))}.`));
+    document.querySelector("#draw-fold").addEventListener("click", () => finishDraw("You folded this hand."));
+
+    document.querySelector("#holdem-deal").addEventListener("click", () => {
+      cardDeck = freshDeck();
+      holdemPlayer = takeCards(2);
+      holdemBoard = takeCards(5);
+      holdemHouse = takeCards(2);
+      renderCards("#holdem-player", holdemPlayer);
+      renderCards("#holdem-board", holdemBoard);
+      document.querySelector("#holdem-house-section").hidden = true;
+      document.querySelector("#holdem-showdown").disabled = false;
+      setMessage("#holdem-message", "Cards are dealt. Showdown when ready.");
+    });
+    document.querySelector("#holdem-showdown").addEventListener("click", () => {
+      const playerScore = bestHand([...holdemPlayer, ...holdemBoard]);
+      const houseScore = bestHand([...holdemHouse, ...holdemBoard]);
+      renderCards("#holdem-house", holdemHouse);
+      document.querySelector("#holdem-house-section").hidden = false;
+      const comparison = compareScores(playerScore, houseScore);
+      const result = comparison > 0 ? "You win" : comparison < 0 ? "House wins" : "It's a tie";
+      setMessage("#holdem-message", `${result}. Your ${handLabel(playerScore)} vs. house ${handLabel(houseScore)}.`);
+      document.querySelector("#holdem-showdown").disabled = true;
+    });
+  </script>
+</body>
+</html>

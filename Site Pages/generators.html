@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c0c0c">
-  <meta name="description" content="Roll dice, pick a random number, or spin a custom wheel.">
+  <meta name="description" content="Roll dice, pick a random number, spin a custom wheel, or play the slot machine.">
   <title>Random Generators — Random Projects</title>
   <style>
     :root {
@@ -79,6 +79,7 @@
     }
     .generator:nth-child(2) { animation-delay: 80ms; }
     .generator:nth-child(3) { animation-delay: 160ms; }
+    .generator:nth-child(4) { animation-delay: 240ms; }
     h2 { margin: 0 0 8px; color: #f3f3f3; font-size: 18px; }
     .description { margin: 0 0 16px; color: #aaa; line-height: 1.6; }
     .generator-form { display: grid; gap: 12px; }
@@ -128,6 +129,24 @@
       font-weight: 700;
     }
     .number-display.is-shuffling { animation: number-flash 90ms ease-in-out infinite alternate; }
+    .slot-reels {
+      display: grid;
+      width: min(100%, 390px);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .slot-reel {
+      display: grid;
+      min-width: 0;
+      min-height: 76px;
+      place-items: center;
+      border: 1px solid #79d6c3;
+      background: linear-gradient(145deg, #203b36, #15201e);
+      color: #b7eee3;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .slot-reel.is-spinning { animation: die-roll 100ms ease-in-out infinite alternate; }
     .wheel-stage {
       position: relative;
       width: 154px;
@@ -209,7 +228,7 @@
     <section class="screen" aria-labelledby="page-title">
       <p class="eyebrow">Browser edition</p>
       <h1 id="page-title">Random Generators</h1>
-      <p class="intro">Roll a die, choose a random number, or let the wheel make the choice for you.</p>
+      <p class="intro">Roll a die, choose a random number, spin a wheel, or try your luck on the slots.</p>
       <div class="generator-list">
         <section class="generator" aria-labelledby="dice-title">
           <h2 id="dice-title">Dice Roller</h2>
@@ -264,6 +283,32 @@
             <p class="result" id="wheel-result" role="status" aria-live="polite"></p>
           </form>
           <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Generators/wheel.py" target="_blank" rel="noopener noreferrer">Python source ↗</a>
+        </section>
+
+        <section class="generator" aria-labelledby="slots-title">
+          <h2 id="slots-title">Slot Machine</h2>
+          <p class="description">Match three prize symbols to win. Each machine has different odds.</p>
+          <form class="generator-form" id="slots-form">
+            <label class="field" for="slot-machine">
+              Choose a machine
+              <select id="slot-machine">
+                <option value="classic">Classic Slot Machine</option>
+                <option value="fruit">Fruit Slot Machine</option>
+                <option value="lucky-seven">Lucky Seven Slot Machine</option>
+              </select>
+            </label>
+            <div class="result-visual" aria-hidden="true">
+              <div class="slot-reels">
+                <span class="slot-reel" id="slot-reel-one">?</span>
+                <span class="slot-reel" id="slot-reel-two">?</span>
+                <span class="slot-reel" id="slot-reel-three">?</span>
+              </div>
+            </div>
+            <p class="result" id="slot-balance">Balance: $100</p>
+            <button class="generate-button" type="submit">Spin the slots</button>
+            <p class="result" id="slots-result" role="status" aria-live="polite"></p>
+          </form>
+          <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Python_Projects/Slot_Machine.py" target="_blank" rel="noopener noreferrer">Python source ↗</a>
         </section>
       </div>
     </section>
@@ -414,6 +459,68 @@
         result.textContent = `The ${wheelType} landed on: ${choices[choiceIndex]}`;
         setBusy(wheelForm, false);
       }, prefersReducedMotion.matches ? 50 : 4250);
+    });
+
+    const slotsForm = document.querySelector("#slots-form");
+    const slotMachineSelect = document.querySelector("#slot-machine");
+    const slotReels = [
+      document.querySelector("#slot-reel-one"),
+      document.querySelector("#slot-reel-two"),
+      document.querySelector("#slot-reel-three"),
+    ];
+    const slotBalance = document.querySelector("#slot-balance");
+    const slotsResult = document.querySelector("#slots-result");
+    const slotSymbols = ["Cherry", "Lemon", "Orange", "Plum", "Bell", "Bar", "Seven"];
+    const prizeSymbols = ["Cherry", "Bar", "Seven"];
+    const slotPayouts = { Cherry: 10, Bar: 50, Seven: 100 };
+    const machineBonusSymbols = {
+      classic: [],
+      fruit: Array(3).fill("Cherry"),
+      "lucky-seven": Array(9).fill("Seven"),
+    };
+    let balance = 100;
+
+    function chooseSlotSymbol(machine) {
+      const weightedSymbols = slotSymbols.concat(machineBonusSymbols[machine]);
+      return weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
+    }
+
+    function spinSlots(machine) {
+      return slotReels.map(() => chooseSlotSymbol(machine));
+    }
+
+    slotsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const result = spinSlots(slotMachineSelect.value);
+      const duration = prefersReducedMotion.matches ? 50 : 850;
+      setBusy(slotsForm, true);
+      slotMachineSelect.disabled = true;
+      slotsResult.textContent = "The reels are spinning…";
+      slotReels.forEach((reel) => reel.classList.add("is-spinning"));
+
+      const shuffle = window.setInterval(() => {
+        slotReels.forEach((reel) => {
+          reel.textContent = chooseSlotSymbol(slotMachineSelect.value);
+        });
+      }, 70);
+
+      window.setTimeout(() => {
+        window.clearInterval(shuffle);
+        slotReels.forEach((reel, index) => {
+          reel.classList.remove("is-spinning");
+          reel.textContent = result[index];
+        });
+        const payout = result[0] === result[1] && result[1] === result[2]
+          ? slotPayouts[result[0]] || 0
+          : 0;
+        balance += payout;
+        slotBalance.textContent = `Balance: $${balance}`;
+        slotsResult.textContent = payout
+          ? `Three ${result[0]} symbols! You won $${payout}.`
+          : "No payout this time.";
+        slotMachineSelect.disabled = false;
+        setBusy(slotsForm, false);
+      }, duration);
     });
   </script>
   <script src="./music.js"></script>
