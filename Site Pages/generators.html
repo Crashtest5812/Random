@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0c0c">
+  <meta name="description" content="Roll dice, pick a random number, or spin a custom wheel.">
+  <title>Random Generators — Random Projects</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: #0c0c0c;
+      color: #e6e6e6;
+      font-size: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at top, #1d2525, #0c0c0c 55%);
+    }
+    button, input, select { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+      outline: 2px solid #79d6c3;
+      outline-offset: 3px;
+    }
+    .terminal {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 900px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #101010;
+      border-inline: 1px solid #292929;
+    }
+    .terminal-header {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 0 20px;
+      border-bottom: 1px solid #292929;
+      color: #a5a5a5;
+      font-size: 12px;
+    }
+    .terminal-title { color: #dedede; }
+    .home-link { color: #a5a5a5; text-decoration: none; }
+    .home-link:hover { color: #fff; }
+    .sound-toggle {
+      min-height: 34px;
+      border: 1px solid #454545;
+      padding: 6px 10px;
+      background: #141414;
+      color: #bbb;
+      cursor: pointer;
+    }
+    .sound-toggle:hover, .sound-toggle[aria-pressed="true"] { border-color: #79d6c3; color: #b7eee3; }
+    .sound-toggle:disabled { cursor: not-allowed; opacity: 0.6; }
+    .audio-status { width: 100%; margin: -5px 0 8px; color: #79d6c3; font-size: 11px; }
+    .screen { width: min(100%, 720px); margin: 0 auto; padding: 38px 28px 48px; }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #79d6c3;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; color: #f3f3f3; font-size: clamp(30px, 7vw, 48px); letter-spacing: -0.06em; }
+    .intro { margin: 12px 0 26px; color: #aaa; line-height: 1.7; }
+    .generator-list { display: grid; gap: 16px; }
+    .generator {
+      border: 1px solid #363636;
+      padding: 20px;
+      background: #141414;
+      animation: card-arrive 420ms ease-out both;
+    }
+    .generator:nth-child(2) { animation-delay: 80ms; }
+    .generator:nth-child(3) { animation-delay: 160ms; }
+    h2 { margin: 0 0 8px; color: #f3f3f3; font-size: 18px; }
+    .description { margin: 0 0 16px; color: #aaa; line-height: 1.6; }
+    .generator-form { display: grid; gap: 12px; }
+    .field { display: grid; gap: 7px; color: #aaa; font-size: 12px; }
+    .field input, .field select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #454545;
+      padding: 9px 11px;
+      background: #0c0c0c;
+      color: #eee;
+    }
+    .generate-button {
+      min-height: 42px;
+      border: 1px solid #79d6c3;
+      padding: 10px 13px;
+      background: #15201e;
+      color: #b7eee3;
+      cursor: pointer;
+    }
+    .generate-button:hover { background: #1c2b28; }
+    .generate-button:disabled { cursor: wait; opacity: 0.65; }
+    .result { min-height: 1.6em; margin: 0; color: #79d6c3; line-height: 1.6; }
+    .result-visual {
+      display: grid;
+      min-height: 94px;
+      place-items: center;
+      margin-block: 4px;
+    }
+    .die {
+      display: grid;
+      width: 66px;
+      aspect-ratio: 1;
+      place-items: center;
+      border: 1px solid #79d6c3;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #203b36, #15201e);
+      box-shadow: 0 8px 24px rgb(0 0 0 / 25%), inset 0 1px rgb(255 255 255 / 12%);
+      color: #b7eee3;
+      font: 700 28px/1 "SFMono-Regular", Consolas, monospace;
+    }
+    .die.is-rolling { animation: die-roll 150ms ease-in-out infinite alternate; }
+    .number-display {
+      color: #b7eee3;
+      font-size: clamp(30px, 8vw, 46px);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .number-display.is-shuffling { animation: number-flash 90ms ease-in-out infinite alternate; }
+    .wheel-stage {
+      position: relative;
+      width: 154px;
+      aspect-ratio: 1;
+      padding: 9px;
+      border: 1px solid #454545;
+      border-radius: 50%;
+      background: #101010;
+      box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+    }
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border: 2px solid #c4f1e8;
+      border-radius: 50%;
+      background: repeating-conic-gradient(#2c7368 0deg 45deg, #1b3834 45deg 90deg);
+      transition: transform 4.2s cubic-bezier(0.12, 0.72, 0.12, 1);
+    }
+    .wheel::after {
+      content: "";
+      position: absolute;
+      inset: 50%;
+      width: 18px;
+      aspect-ratio: 1;
+      border: 2px solid #c4f1e8;
+      border-radius: 50%;
+      background: #15201e;
+      transform: translate(-50%, -50%);
+    }
+    .wheel-pointer {
+      position: absolute;
+      z-index: 1;
+      top: -4px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-right: 10px solid transparent;
+      border-left: 10px solid transparent;
+      border-top: 20px solid #c4f1e8;
+      filter: drop-shadow(0 2px 2px rgb(0 0 0 / 60%));
+      transform: translateX(-50%);
+    }
+    .generator.is-busy .result-visual { filter: drop-shadow(0 0 12px rgb(121 214 195 / 18%)); }
+    .source-link { color: #a5a5a5; font-size: 12px; }
+    .source-link:hover { color: #fff; }
+    @keyframes card-arrive {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes die-roll {
+      from { transform: rotate(-12deg) translateY(-2px); }
+      to { transform: rotate(12deg) translateY(2px); }
+    }
+    @keyframes number-flash {
+      from { opacity: 0.55; transform: translateY(2px) scale(0.96); }
+      to { opacity: 1; transform: translateY(-2px) scale(1.02); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      .wheel { transition-duration: 0.01ms; }
+    }
+    @media (max-width: 520px) {
+      :root { font-size: 13px; }
+      .terminal-header { padding-inline: 13px; }
+      .screen { padding: 28px 16px 38px; }
+      .generator { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="terminal" aria-label="Random generators">
+    <header class="terminal-header">
+      <a class="home-link" href="./index.html">← Project index</a>
+      <span class="terminal-title">Random Generators</span>
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="false">Sound effects: off</button>
+      <button class="sound-toggle" id="music-toggle" type="button" aria-pressed="false">Music: off</button>
+      <p class="audio-status" id="audio-status" role="status" aria-live="polite"></p>
+    </header>
+    <section class="screen" aria-labelledby="page-title">
+      <p class="eyebrow">Browser edition</p>
+      <h1 id="page-title">Random Generators</h1>
+      <p class="intro">Roll a die, choose a random number, or let the wheel make the choice for you.</p>
+      <div class="generator-list">
+        <section class="generator" aria-labelledby="dice-title">
+          <h2 id="dice-title">Dice Roller</h2>
+          <p class="description">Roll a die with any positive number of sides.</p>
+          <form class="generator-form" id="dice-form">
+            <label class="field" for="dice-sides">
+              Number of sides
+              <input id="dice-sides" type="number" min="1" step="1" value="6" required>
+            </label>
+            <button class="generate-button" type="submit">Roll the die</button>
+            <div class="result-visual" aria-hidden="true"><span class="die" id="die">?</span></div>
+            <p class="result" id="dice-result" role="status" aria-live="polite"></p>
+          </form>
+          <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Generators/Dice.java" target="_blank" rel="noopener noreferrer">Java source ↗</a>
+        </section>
+
+        <section class="generator" aria-labelledby="number-title">
+          <h2 id="number-title">Random Number</h2>
+          <p class="description">Generate an integer from 1 through your upper limit, inclusive.</p>
+          <form class="generator-form" id="number-form">
+            <label class="field" for="number-limit">
+              Upper limit
+              <input id="number-limit" type="number" min="1" step="1" value="100" required>
+            </label>
+            <button class="generate-button" type="submit">Generate a number</button>
+            <div class="result-visual" aria-hidden="true"><span class="number-display" id="number-display">—</span></div>
+            <p class="result" id="number-result" role="status" aria-live="polite"></p>
+          </form>
+          <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Generators/Random_Number_Generator.java" target="_blank" rel="noopener noreferrer">Java source ↗</a>
+        </section>
+
+        <section class="generator" aria-labelledby="wheel-title">
+          <h2 id="wheel-title">Wheel of Fortune</h2>
+          <p class="description">Enter choices separated by commas and spin the wheel.</p>
+          <form class="generator-form" id="wheel-form">
+            <label class="field" for="wheel-type">
+              Wheel type
+              <select id="wheel-type">
+                <option value="Prize wheel">Prize wheel</option>
+                <option value="Number wheel">Number wheel</option>
+                <option value="Name wheel">Name wheel</option>
+              </select>
+            </label>
+            <label class="field" for="wheel-choices">
+              Choices
+              <input id="wheel-choices" type="text" placeholder="Lunch, Coffee, Movie" required>
+            </label>
+            <button class="generate-button" type="submit">Spin the wheel</button>
+            <div class="result-visual" aria-hidden="true">
+              <div class="wheel-stage"><span class="wheel-pointer"></span><div class="wheel" id="wheel"></div></div>
+            </div>
+            <p class="result" id="wheel-result" role="status" aria-live="polite"></p>
+          </form>
+          <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Generators/wheel.py" target="_blank" rel="noopener noreferrer">Python source ↗</a>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script>
+    const soundToggle = document.querySelector("#sound-toggle");
+    const musicToggle = document.querySelector("#music-toggle");
+    const audioStatus = document.querySelector("#audio-status");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const diceSound = new Audio("./assets/Dice.mp3");
+    const wheelSound = new Audio("./assets/wheel.mp3");
+    const music = new Audio("./assets/main.mp3");
+    let soundEnabled = false;
+    let musicEnabled = false;
+    music.loop = true;
+    music.volume = 0.2;
+    diceSound.volume = 0.65;
+    wheelSound.volume = 0.55;
+    music.preload = "none";
+    diceSound.preload = "none";
+    wheelSound.preload = "none";
+
+    function playClip(clip) {
+      clip.currentTime = 0;
+      clip.play().catch((error) => {
+        console.error("Could not play audio.", error);
+        audioStatus.textContent = "Audio could not play. Check your browser's sound settings.";
+      });
+    }
+
+    function stopClip(clip) {
+      clip.pause();
+      clip.currentTime = 0;
+    }
+
+    function randomInteger(maximum) {
+      return Math.floor(Math.random() * maximum) + 1;
+    }
+
+    function readPositiveInteger(input) {
+      const value = Number(input.value);
+      return Number.isSafeInteger(value) && value > 0 ? value : null;
+    }
+
+    function setBusy(form, busy) {
+      form.closest(".generator").classList.toggle("is-busy", busy);
+      form.querySelector(".generate-button").disabled = busy;
+    }
+
+    soundToggle.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+      soundToggle.textContent = `Sound effects: ${soundEnabled ? "on" : "off"}`;
+      if (soundEnabled) {
+        audioStatus.textContent = "";
+      } else {
+        stopClip(diceSound);
+        stopClip(wheelSound);
+      }
+    });
+
+    musicToggle.addEventListener("click", () => {
+      musicEnabled = !musicEnabled;
+      musicToggle.setAttribute("aria-pressed", String(musicEnabled));
+      musicToggle.textContent = `Music: ${musicEnabled ? "on" : "off"}`;
+      if (!musicEnabled) {
+        music.pause();
+        audioStatus.textContent = "";
+        return;
+      }
+
+      music.play().catch((error) => {
+        console.error("Could not start background music.", error);
+        musicEnabled = false;
+        musicToggle.setAttribute("aria-pressed", "false");
+        musicToggle.textContent = "Music: off";
+        audioStatus.textContent = "Music could not start. Check your browser's sound settings.";
+      });
+    });
+
+    const diceForm = document.querySelector("#dice-form");
+    const die = document.querySelector("#die");
+    diceForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const sides = readPositiveInteger(document.querySelector("#dice-sides"));
+      const result = document.querySelector("#dice-result");
+      if (!sides) {
+        result.textContent = "Enter a positive whole number of sides.";
+        return;
+      }
+
+      const roll = randomInteger(sides);
+      const duration = prefersReducedMotion.matches ? 50 : 850;
+      setBusy(diceForm, true);
+      die.classList.add("is-rolling");
+      if (soundEnabled) playClip(diceSound);
+      const shuffle = window.setInterval(() => {
+        die.textContent = String(randomInteger(sides));
+      }, 65);
+      window.setTimeout(() => {
+        window.clearInterval(shuffle);
+        die.classList.remove("is-rolling");
+        die.textContent = String(roll);
+        result.textContent = `You rolled ${roll} (1–${sides}).`;
+        setBusy(diceForm, false);
+      }, duration);
+    });
+
+    const numberForm = document.querySelector("#number-form");
+    const numberDisplay = document.querySelector("#number-display");
+    numberForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const limit = readPositiveInteger(document.querySelector("#number-limit"));
+      const result = document.querySelector("#number-result");
+      if (!limit) {
+        result.textContent = "Enter a positive whole-number upper limit.";
+        return;
+      }
+
+      const number = randomInteger(limit);
+      const duration = prefersReducedMotion.matches ? 50 : 700;
+      setBusy(numberForm, true);
+      numberDisplay.classList.add("is-shuffling");
+      if (soundEnabled) playClip(diceSound);
+      const shuffle = window.setInterval(() => {
+        numberDisplay.textContent = String(randomInteger(limit));
+      }, 90);
+      window.setTimeout(() => {
+        window.clearInterval(shuffle);
+        numberDisplay.classList.remove("is-shuffling");
+        numberDisplay.textContent = String(number);
+        result.textContent = `Your number is ${number}.`;
+        setBusy(numberForm, false);
+      }, duration);
+    });
+
+    const wheelForm = document.querySelector("#wheel-form");
+    const wheel = document.querySelector("#wheel");
+    let wheelRotation = 0;
+    wheelForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const choices = document.querySelector("#wheel-choices").value
+        .split(",")
+        .map((choice) => choice.trim())
+        .filter(Boolean);
+      const result = document.querySelector("#wheel-result");
+      if (!choices.length) {
+        result.textContent = "Enter at least one choice, separated by commas.";
+        return;
+      }
+
+      const choiceIndex = Math.floor(Math.random() * choices.length);
+      const wheelType = document.querySelector("#wheel-type").value.toLowerCase();
+      const slice = 360 / choices.length;
+      const landingAngle = 360 - (choiceIndex + 0.5) * slice;
+      const fullTurns = Math.ceil(wheelRotation / 360) + 5;
+      wheelRotation = fullTurns * 360 + landingAngle;
+      const colors = ["#2c7368", "#31587a", "#75602d", "#704c78", "#386b45", "#79514a"];
+      const stops = choices.map((_, index) =>
+        `${colors[index % colors.length]} ${index * slice}deg ${(index + 1) * slice}deg`,
+      );
+      wheel.style.background = `conic-gradient(${stops.join(", ")})`;
+      wheel.style.transform = `rotate(${wheelRotation}deg)`;
+      setBusy(wheelForm, true);
+      result.textContent = "The wheel is spinning…";
+
+      if (soundEnabled) {
+        playClip(wheelSound);
+      }
+
+      window.setTimeout(() => {
+        stopClip(wheelSound);
+        result.textContent = `The ${wheelType} landed on: ${choices[choiceIndex]}`;
+        setBusy(wheelForm, false);
+      }, prefersReducedMotion.matches ? 50 : 4250);
+    });
+  </script>
+</body>
+</html>

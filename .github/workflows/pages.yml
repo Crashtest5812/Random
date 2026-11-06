@@ -28,7 +28,10 @@ jobs:
       - name: Prepare site
         run: |
           mkdir -p _site
-          cp index.html cafe.html _site/
+          cp "Site Pages/"*.html _site/
+          cp SB/supabase-config.js _site/
+          mkdir -p _site/assets
+          cp assets/*.mp3 _site/assets/
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
