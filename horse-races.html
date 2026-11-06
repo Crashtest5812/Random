@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0c0c">
+  <meta name="description" content="Pick a horse and watch the Orange County Horse Races browser game.">
+  <title>Horse Races — Random Projects</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: #0c0c0c;
+      color: #e6e6e6;
+      font-size: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(ellipse at top, #252015, #0c0c0c 55%);
+    }
+    button, input, select { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+      outline: 2px solid #e4b83a;
+      outline-offset: 3px;
+    }
+    .terminal {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 900px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #101010;
+      border-inline: 1px solid #292929;
+    }
+    .terminal-header {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 20px;
+      border-bottom: 1px solid #292929;
+      color: #a5a5a5;
+      font-size: 12px;
+    }
+    .terminal-title { color: #dedede; }
+    .home-link { color: #a5a5a5; text-decoration: none; }
+    .home-link:hover { color: #fff; }
+    .screen { width: min(100%, 720px); margin: 0 auto; padding: 38px 28px 48px; }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #e4b83a;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; color: #f3f3f3; font-size: clamp(30px, 7vw, 48px); letter-spacing: -0.06em; }
+    .intro { margin: 12px 0 26px; color: #aaa; line-height: 1.7; }
+    .horse-list { display: grid; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; }
+    .horse-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 9px 12px;
+      border: 1px solid #363636;
+      background: #141414;
+      cursor: pointer;
+    }
+    .horse-option:has(input:checked) { border-color: #e4b83a; background: #211d12; }
+    .horse-option input { accent-color: #e4b83a; }
+    .bet-form { display: grid; gap: 14px; }
+    .bet-form[hidden] { display: none; }
+    .field { display: grid; gap: 7px; color: #aaa; font-size: 12px; }
+    .field[hidden] { display: none; }
+    .field select, .field input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #454545;
+      padding: 9px 11px;
+      background: #0c0c0c;
+      color: #eee;
+    }
+    .bet-toggle { display: flex; align-items: center; gap: 9px; color: #dedede; font-size: 13px; }
+    .bet-toggle input { accent-color: #e4b83a; }
+    .help, .message { margin: 0; color: #aaa; font-size: 12px; line-height: 1.6; }
+    .message { min-height: 1.6em; color: #e4b83a; }
+    .race-button, .again-button {
+      min-height: 42px;
+      border: 1px solid #e4b83a;
+      padding: 10px 13px;
+      background: #211d12;
+      color: #f4d77d;
+      text-align: center;
+      cursor: pointer;
+    }
+    .race-button:hover, .again-button:hover { background: #302813; }
+    .race-button:disabled { cursor: wait; opacity: 0.6; }
+    .results { margin-top: 30px; }
+    .results[hidden] { display: none; }
+    h2 { margin: 0 0 12px; color: #f3f3f3; font-size: 18px; }
+    .race-status { min-height: 1.6em; margin: 0 0 12px; color: #aaa; line-height: 1.6; }
+    .finish-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .finish-list li { padding: 10px 12px; border: 1px solid #363636; }
+    .finish-list li:first-child { border-color: #e4b83a; color: #f4d77d; }
+    .outcome { margin: 16px 0 0; color: #dedede; line-height: 1.7; }
+    .again-button { margin-top: 18px; }
+    @media (max-width: 520px) {
+      :root { font-size: 13px; }
+      .terminal-header { padding-inline: 13px; }
+      .screen { padding: 28px 16px 38px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="terminal" aria-label="Horse Races browser game">
+    <header class="terminal-header">
+      <a class="home-link" href="./index.html">← Project index</a>
+      <span class="terminal-title">Orange County Horse Races</span>
+      <span>Race 31</span>
+    </header>
+    <section class="screen" aria-labelledby="page-title">
+      <p class="eyebrow">Browser edition · Play money only</p>
+      <h1 id="page-title">Horse Races</h1>
+      <p class="intro">Meet five randomly named horses, choose whether to place a play-money bet, and see how they finish.</p>
+      <ul class="horse-list" id="horse-list" aria-label="Today's horses"></ul>
+      <form class="bet-form" id="bet-form">
+        <label class="bet-toggle">
+          <input id="place-bet" type="checkbox">
+          Place a play-money bet
+        </label>
+        <label class="field" id="horse-field" for="horse-choice" hidden>
+          Choose your horse
+          <select id="horse-choice" disabled></select>
+        </label>
+        <label class="field" id="amount-field" for="bet-amount" hidden>
+          Bet amount ($)
+          <input id="bet-amount" type="number" min="0.01" step="0.01" value="10" disabled>
+        </label>
+        <p class="help">Your bet is just for fun; prizes and fourth/fifth-place penalties are randomly set each race. All amounts are pretend.</p>
+        <p class="message" id="form-message" role="status"></p>
+        <button class="race-button" id="race-button" type="submit">Start the race</button>
+      </form>
+      <section class="results" id="results" aria-labelledby="results-title" hidden>
+        <h2 id="results-title">Race results</h2>
+        <p class="race-status" id="race-status" aria-live="polite"></p>
+        <ol class="finish-list" id="finish-list"></ol>
+        <p class="outcome" id="outcome" aria-live="polite"></p>
+        <button class="again-button" id="again-button" type="button">Run another race</button>
+      </section>
+    </section>
+  </main>
+  <script>
+    const adjectives = ["Lightning", "Thunder", "Midnight", "Golden", "Silver", "Wild", "Lucky", "Rapid", "Fierce", "Majestic"];
+    const nouns = ["Bolt", "Storm", "Rider", "Hooves", "Streak", "Comet", "Star", "Shadow", "Blaze", "Spirit", "Bullet", "Flash", "Gale", "Phantom", "Tornado", "Whirlwind", "Zephyr", "Tempest", "Cyclone", "Hurricane"];
+    const nameCombinations = adjectives.flatMap((adjective) => nouns.map((noun) => `${adjective} ${noun}`));
+
+    function makeHorseNames() {
+      const names = [];
+      while (names.length < 5) {
+        const name = nameCombinations[Math.floor(Math.random() * nameCombinations.length)];
+        if (!names.includes(name)) names.push(name);
+      }
+      return names;
+    }
+
+    let horseNames = makeHorseNames();
+    const horseList = document.querySelector("#horse-list");
+    const betForm = document.querySelector("#bet-form");
+    const placeBet = document.querySelector("#place-bet");
+    const horseField = document.querySelector("#horse-field");
+    const horseChoice = document.querySelector("#horse-choice");
+    const amountField = document.querySelector("#amount-field");
+    const betAmount = document.querySelector("#bet-amount");
+    const formMessage = document.querySelector("#form-message");
+    const raceButton = document.querySelector("#race-button");
+    const results = document.querySelector("#results");
+    const raceStatus = document.querySelector("#race-status");
+    const finishList = document.querySelector("#finish-list");
+    const outcome = document.querySelector("#outcome");
+    const againButton = document.querySelector("#again-button");
+    const money = (amount) => `$${amount.toFixed(2)}`;
+    const ordinal = (place) => `${place}${place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th"}`;
+    let raceTimer;
+
+    function renderHorses() {
+      horseList.replaceChildren();
+      horseChoice.replaceChildren();
+      for (const [index, name] of horseNames.entries()) {
+        const item = document.createElement("li");
+        item.textContent = `${index + 1}. ${name}`;
+        horseList.append(item);
+
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = `${index + 1}. ${name}`;
+        horseChoice.append(option);
+      }
+    }
+
+    function setBetFields() {
+      const betting = placeBet.checked;
+      horseField.hidden = !betting;
+      amountField.hidden = !betting;
+      horseChoice.disabled = !betting;
+      betAmount.disabled = !betting;
+      betAmount.required = betting;
+      formMessage.textContent = "";
+    }
+
+    function startRace(selectedHorse, amount) {
+      const finishOrder = [...horseNames];
+      for (let index = finishOrder.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [finishOrder[index], finishOrder[swapIndex]] = [finishOrder[swapIndex], finishOrder[index]];
+      }
+      const prizes = [
+        Math.floor(Math.random() * 4001) + 1000,
+        Math.floor(Math.random() * 1501) + 500,
+        Math.floor(Math.random() * 901) + 100,
+      ];
+      const losses = [
+        Math.floor(Math.random() * 451) + 50,
+        Math.floor(Math.random() * 901) + 100,
+      ];
+
+      betForm.hidden = true;
+      results.hidden = false;
+      finishList.replaceChildren();
+      outcome.textContent = "";
+      raceButton.disabled = true;
+      raceStatus.textContent = "And they're off!";
+
+      let revealed = 0;
+      function revealNext() {
+        const name = finishOrder[revealed];
+        const item = document.createElement("li");
+        item.textContent = `${ordinal(revealed + 1)} place: ${name}`;
+        finishList.append(item);
+        revealed += 1;
+
+        if (revealed < finishOrder.length) {
+          raceStatus.textContent = `${finishOrder[revealed]} is racing toward the finish!`;
+          raceTimer = window.setTimeout(revealNext, 650);
+          return;
+        }
+
+        raceStatus.textContent = "That's the finish!";
+        if (selectedHorse) {
+          const place = finishOrder.indexOf(selectedHorse) + 1;
+          if (place <= 3) {
+            outcome.textContent = `You bet ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place and won ${money(prizes[place - 1])} in pretend prize money.`;
+          } else {
+            outcome.textContent = `You bet ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place and lost ${money(losses[place - 4])} in pretend race fees.`;
+          }
+        } else {
+          outcome.textContent = `The winner is ${finishOrder[0]}! You didn't place a bet this race.`;
+        }
+        raceButton.disabled = false;
+        againButton.focus();
+      }
+
+      raceTimer = window.setTimeout(revealNext, 350);
+    }
+
+    placeBet.addEventListener("change", setBetFields);
+    betForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      formMessage.textContent = "";
+      if (placeBet.checked) {
+        const amount = Number(betAmount.value);
+        if (!Number.isFinite(amount) || amount <= 0) {
+          formMessage.textContent = "Enter a bet amount greater than $0.";
+          betAmount.focus();
+          return;
+        }
+        startRace(horseChoice.value, amount);
+      } else {
+        startRace(null, 0);
+      }
+    });
+    againButton.addEventListener("click", () => {
+      window.clearTimeout(raceTimer);
+      horseNames = makeHorseNames();
+      renderHorses();
+      placeBet.checked = false;
+      setBetFields();
+      results.hidden = true;
+      betForm.hidden = false;
+      raceStatus.textContent = "";
+      betForm.querySelector("button[type='submit']").focus();
+    });
+
+    renderHorses();
+    setBetFields();
+  </script>
+</body>
+</html>
