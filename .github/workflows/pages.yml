@@ -30,6 +30,7 @@ jobs:
           mkdir -p "_site/Site Pages" _site/SB
           cp index.html _site/
           cp "Site Pages/"*.html "_site/Site Pages/"
+          cp "Site Pages/"*.js "_site/Site Pages/"
           cp SB/supabase-config.js _site/SB/
           mkdir -p _site/assets
           cp assets/*.mp3 _site/assets/

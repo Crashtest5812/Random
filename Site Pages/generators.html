@@ -197,14 +197,14 @@
     }
   </style>
 </head>
-<body>
+<body data-music-track="../assets/main.mp3">
   <main class="terminal" aria-label="Random generators">
     <header class="terminal-header">
       <a class="home-link" href="./index.html">← Project index</a>
       <span class="terminal-title">Random Generators</span>
       <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="false">Sound effects: off</button>
-      <button class="sound-toggle" id="music-toggle" type="button" aria-pressed="false">Music: off</button>
-      <p class="audio-status" id="audio-status" role="status" aria-live="polite"></p>
+      <button class="sound-toggle" type="button" data-site-music-toggle aria-pressed="false">Music: off</button>
+      <p class="audio-status" id="audio-status" data-site-music-status role="status" aria-live="polite"></p>
     </header>
     <section class="screen" aria-labelledby="page-title">
       <p class="eyebrow">Browser edition</p>
@@ -270,19 +270,13 @@
   </main>
   <script>
     const soundToggle = document.querySelector("#sound-toggle");
-    const musicToggle = document.querySelector("#music-toggle");
     const audioStatus = document.querySelector("#audio-status");
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const diceSound = new Audio("../assets/Dice.mp3");
     const wheelSound = new Audio("../assets/wheel.mp3");
-    const music = new Audio("../assets/main.mp3");
     let soundEnabled = false;
-    let musicEnabled = false;
-    music.loop = true;
-    music.volume = 0.2;
     diceSound.volume = 0.65;
     wheelSound.volume = 0.55;
-    music.preload = "none";
     diceSound.preload = "none";
     wheelSound.preload = "none";
 
@@ -323,25 +317,6 @@
         stopClip(diceSound);
         stopClip(wheelSound);
       }
-    });
-
-    musicToggle.addEventListener("click", () => {
-      musicEnabled = !musicEnabled;
-      musicToggle.setAttribute("aria-pressed", String(musicEnabled));
-      musicToggle.textContent = `Music: ${musicEnabled ? "on" : "off"}`;
-      if (!musicEnabled) {
-        music.pause();
-        audioStatus.textContent = "";
-        return;
-      }
-
-      music.play().catch((error) => {
-        console.error("Could not start background music.", error);
-        musicEnabled = false;
-        musicToggle.setAttribute("aria-pressed", "false");
-        musicToggle.textContent = "Music: off";
-        audioStatus.textContent = "Music could not start. Check your browser's sound settings.";
-      });
     });
 
     const diceForm = document.querySelector("#dice-form");
@@ -441,5 +416,6 @@
       }, prefersReducedMotion.matches ? 50 : 4250);
     });
   </script>
+  <script src="./music.js"></script>
 </body>
 </html>

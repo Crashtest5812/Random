@@ -7,6 +7,7 @@ adjectives = ["Lightning", "Thunder", "Midnight", "Golden", "Silver", "Wild", "L
 nouns = ["Bolt", "Storm", "Rider", "Hooves", "Streak", "Comet", "Star", "Shadow", "Blaze", "Spirit","Bullet","Flash","Gale","Phantom","Tornado","Whirlwind","Zephyr","Tempest","Cyclone","Hurricane"]
 name_combinations = [f"{adjective} {noun}" for adjective in adjectives for noun in nouns]
 horse_names = random.sample(name_combinations, 5)
+bankroll = 5000.00
 
 # Prizes and losses for the race
 first_place_prize = random.randint(1000, 5000)
@@ -25,6 +26,7 @@ time.sleep(1)
 print()
 
 # Ticket sales and betting
+print(f"Ticket Sales: Your play-money bankroll is ${bankroll:.2f}.")
 bet = input("Ticket Sales: Do you want to place a bet on a horse? (yes/no): ").strip().lower()
 horse_name = None
 amount = 0.0
@@ -38,6 +40,8 @@ if bet == "yes":
             amount = float(input("Ticket Sales: How much do you want to bet? $").strip())
             if amount <= 0:
                 print("Invalid bet amount. No bet placed.")
+            elif amount > bankroll:
+                print(f"Your bet cannot exceed your ${bankroll:.2f} bankroll. No bet placed.")
             else:
                 horse_name = horse_names[int(horse_number) - 1]
                 print(f"Ticket Sales: You placed a bet on {horse_name} for ${amount:.2f}. Good luck!")
@@ -94,13 +98,17 @@ if horse_name is not None:
     }
     if place in prizes:
         prize = prizes[place]
-        print(f"Ticket Sales: Your horse finished in {place}{'st' if place == 1 else 'nd' if place == 2 else 'rd'} place. You won ${prize:.2f}!")
+        bankroll = bankroll - amount + prize
+        print(f"Ticket Sales: Your horse finished in {place}{'st' if place == 1 else 'nd' if place == 2 else 'rd'} place. Your ${amount:.2f} wager was deducted and you won ${prize:.2f}.")
     else:
         loss = losses[place]
-        print(f"Ticket Sales: Your horse finished in {place}th place. You lost ${loss:.2f}.")
+        fee = min(loss, bankroll - amount)
+        bankroll = max(0.0, bankroll - amount - fee)
+        print(f"Ticket Sales: Your horse finished in {place}th place. Your ${amount:.2f} wager and ${fee:.2f} race fee were deducted.")
         time.sleep(0.5)
         print()
         print("Ticket Sales: Better luck next time! Thank you for participating in the 31st Annual Orange County Horse Races!")
+    print(f"Ticket Sales: Your bankroll is now ${bankroll:.2f}.")
 time.sleep(1)
 print()
 print("Announcer: Thank you for joining us today! We hope you enjoyed the races and we look forward to seeing you next year!")

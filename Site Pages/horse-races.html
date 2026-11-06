@@ -58,6 +58,27 @@
     }
     h1 { margin: 0; color: #f3f3f3; font-size: clamp(30px, 7vw, 48px); letter-spacing: -0.06em; }
     .intro { margin: 12px 0 26px; color: #aaa; line-height: 1.7; }
+    .bankroll {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 18px;
+      border: 1px solid #5b4b22;
+      padding: 12px 14px;
+      background: #211d12;
+      color: #f4d77d;
+    }
+    .bankroll strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+    .reset-bankroll {
+      border: 1px solid #675a36;
+      padding: 7px 10px;
+      background: #171717;
+      color: #dedede;
+      cursor: pointer;
+    }
+    .reset-bankroll:hover { border-color: #e4b83a; }
+    .reset-bankroll:disabled { cursor: wait; opacity: 0.6; }
     .horse-list { display: grid; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; }
     .horse-option {
       display: flex;
@@ -127,7 +148,12 @@
     <section class="screen" aria-labelledby="page-title">
       <p class="eyebrow">Browser edition · Play money only</p>
       <h1 id="page-title">Horse Races</h1>
-      <p class="intro">Meet five randomly named horses, choose whether to place a play-money bet, and see how they finish.</p>
+      <p class="intro">Start with $5,000 in play money. Wagers are limited to your balance, prizes grow your bankroll, and race fees reduce it.</p>
+      <div class="bankroll" aria-live="polite">
+        <span>Available bankroll</span>
+        <strong id="bankroll">$5,000.00</strong>
+        <button class="reset-bankroll" id="reset-bankroll" type="button">Reset play money</button>
+      </div>
       <ul class="horse-list" id="horse-list" aria-label="Today's horses"></ul>
       <form class="bet-form" id="bet-form">
         <label class="bet-toggle">
@@ -139,10 +165,10 @@
           <select id="horse-choice" disabled></select>
         </label>
         <label class="field" id="amount-field" for="bet-amount" hidden>
-          Bet amount ($)
+          Wager ($)
           <input id="bet-amount" type="number" min="0.01" step="0.01" value="10" disabled>
         </label>
-        <p class="help">Your bet is just for fun; prizes and fourth/fifth-place penalties are randomly set each race. All amounts are pretend.</p>
+        <p class="help">Your wager is deducted from your play-money bankroll. A top-three finish adds its prize; fourth or fifth place also charges the listed race fee. All amounts are pretend.</p>
         <p class="message" id="form-message" role="status"></p>
         <button class="race-button" id="race-button" type="submit">Start the race</button>
       </form>
@@ -184,9 +210,23 @@
     const finishList = document.querySelector("#finish-list");
     const outcome = document.querySelector("#outcome");
     const againButton = document.querySelector("#again-button");
-    const money = (amount) => `$${amount.toFixed(2)}`;
+    const bankrollDisplay = document.querySelector("#bankroll");
+    const resetBankroll = document.querySelector("#reset-bankroll");
+    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format;
     const ordinal = (place) => `${place}${place === 1 ? "st" : place === 2 ? "nd" : place === 3 ? "rd" : "th"}`;
+    const startingBankrollCents = 500000;
+    let bankrollCents = startingBankrollCents;
     let raceTimer;
+
+    function renderBankroll() {
+      bankrollDisplay.textContent = money(bankrollCents / 100);
+      betAmount.max = (bankrollCents / 100).toFixed(2);
+      placeBet.disabled = bankrollCents === 0;
+      if (bankrollCents === 0) {
+        placeBet.checked = false;
+        formMessage.textContent = "Your play-money bankroll is empty. Reset it to place another bet.";
+      }
+    }
 
     function renderHorses() {
       horseList.replaceChildren();
@@ -210,6 +250,7 @@
       horseChoice.disabled = !betting;
       betAmount.disabled = !betting;
       betAmount.required = betting;
+      betAmount.max = (bankrollCents / 100).toFixed(2);
       formMessage.textContent = "";
     }
 
@@ -234,6 +275,7 @@
       finishList.replaceChildren();
       outcome.textContent = "";
       raceButton.disabled = true;
+      resetBankroll.disabled = true;
       raceStatus.textContent = "And they're off!";
 
       let revealed = 0;
@@ -253,15 +295,25 @@
         raceStatus.textContent = "That's the finish!";
         if (selectedHorse) {
           const place = finishOrder.indexOf(selectedHorse) + 1;
+          const wagerCents = Math.round(amount * 100);
+          bankrollCents -= wagerCents;
           if (place <= 3) {
-            outcome.textContent = `You bet ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place and won ${money(prizes[place - 1])} in pretend prize money.`;
+            const prize = prizes[place - 1];
+            bankrollCents += prize * 100;
+            outcome.textContent = `You wagered ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place, earning ${money(prize)} in pretend prize money.`;
           } else {
-            outcome.textContent = `You bet ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place and lost ${money(losses[place - 4])} in pretend race fees.`;
+            const fee = losses[place - 4];
+            const chargedFeeCents = Math.min(fee * 100, bankrollCents);
+            bankrollCents -= chargedFeeCents;
+            outcome.textContent = `You wagered ${money(amount)} on ${selectedHorse}. Your horse finished in ${ordinal(place)} place and was charged ${money(chargedFeeCents / 100)} in pretend race fees.`;
           }
+          renderBankroll();
+          outcome.textContent += ` Your bankroll is now ${money(bankrollCents / 100)}.`;
         } else {
           outcome.textContent = `The winner is ${finishOrder[0]}! You didn't place a bet this race.`;
         }
         raceButton.disabled = false;
+        resetBankroll.disabled = false;
         againButton.focus();
       }
 
@@ -274,8 +326,14 @@
       formMessage.textContent = "";
       if (placeBet.checked) {
         const amount = Number(betAmount.value);
-        if (!Number.isFinite(amount) || amount <= 0) {
-          formMessage.textContent = "Enter a bet amount greater than $0.";
+        const amountCents = Math.round(amount * 100);
+        if (!Number.isFinite(amount) || amountCents <= 0) {
+          formMessage.textContent = "Enter a wager greater than $0.";
+          betAmount.focus();
+          return;
+        }
+        if (amountCents > bankrollCents) {
+          formMessage.textContent = `Your wager cannot exceed your ${money(bankrollCents / 100)} bankroll.`;
           betAmount.focus();
           return;
         }
@@ -295,8 +353,15 @@
       raceStatus.textContent = "";
       betForm.querySelector("button[type='submit']").focus();
     });
+    resetBankroll.addEventListener("click", () => {
+      bankrollCents = startingBankrollCents;
+      renderBankroll();
+      setBetFields();
+      formMessage.textContent = "Your play-money bankroll has been reset to $5,000.00.";
+    });
 
     renderHorses();
+    renderBankroll();
     setBetFields();
   </script>
 </body>

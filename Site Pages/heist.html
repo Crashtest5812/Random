@@ -41,6 +41,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+      flex-wrap: wrap;
       padding: 0 20px;
       border-bottom: 1px solid #292929;
       color: #a5a5a5;
@@ -52,6 +53,16 @@
       text-decoration: none;
     }
     .home-link:hover, .run-again:hover { color: #fff; }
+    .music-toggle {
+      border: 1px solid #454545;
+      padding: 6px 10px;
+      background: #171717;
+      color: #bbb;
+      cursor: pointer;
+      font: inherit;
+    }
+    .music-toggle:hover, .music-toggle[aria-pressed="true"] { border-color: #9bd47d; color: #c9efb6; }
+    .audio-status { color: #9bd47d; font-size: 11px; }
     .screen {
       width: min(100%, 720px);
       margin: 0 auto;
@@ -145,11 +156,13 @@
     }
   </style>
 </head>
-<body>
+<body data-music-track="../assets/Heist.mp3">
   <main class="terminal" aria-label="Bank Heist browser game">
     <header class="terminal-header">
       <a class="home-link" href="./index.html">← Project index</a>
       <span class="terminal-title">Bank Heist</span>
+      <button class="music-toggle" type="button" data-site-music-toggle aria-pressed="false">Music: off</button>
+      <span class="audio-status" data-site-music-status role="status" aria-live="polite"></span>
       <button class="run-again" id="run-again" type="button">Start over</button>
     </header>
     <section class="screen" aria-labelledby="page-title">
@@ -378,5 +391,6 @@
     runAgain.addEventListener("click", start);
     start();
   </script>
+  <script src="./music.js"></script>
 </body>
 </html>
