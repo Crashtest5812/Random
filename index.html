@@ -272,6 +272,82 @@
 
     .empty-state { display: none; min-height: 170px; place-items: center; border: 1px dashed var(--line); color: var(--muted); font: 12px var(--mono); }
     .empty-state.visible { display: grid; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+    .feedback {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 38px;
+      padding: 28px 0 84px;
+      border-top: 1px solid var(--line);
+    }
+    .feedback-intro { max-width: 360px; }
+    .feedback-intro h2 { margin: 0 0 12px; }
+    .feedback-intro p:last-child { color: var(--muted); font-size: 14px; line-height: 1.65; }
+    .feedback-panel { display: grid; gap: 26px; }
+    .feedback-block { padding: 20px; border: 1px solid var(--line); background: var(--paper); }
+    .feedback-block h3 { margin: 0 0 7px; font-size: 18px; }
+    .feedback-note, .rating-summary { margin: 0 0 15px; color: var(--muted); font: 11px/1.6 var(--mono); }
+    .rating-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; border: 0; }
+    .rating-option { position: relative; }
+    .rating-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+    .rating-option span {
+      display: block;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      cursor: pointer;
+      font: 12px var(--mono);
+    }
+    .rating-option span:hover, .rating-option input:checked + span {
+      border-color: var(--accent);
+      background: var(--accent-wash);
+      color: var(--accent);
+    }
+    .rating-option input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .feedback-form { display: grid; gap: 11px; }
+    .feedback-input, .feedback-textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      padding: 10px 11px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 12px var(--mono);
+    }
+    .feedback-textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+    .feedback-submit {
+      justify-self: start;
+      min-height: 38px;
+      border: 0;
+      padding: 0 13px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .feedback-submit:hover { filter: brightness(0.9); }
+    .feedback-status { min-height: 1.5em; margin: 10px 0 0; color: var(--muted); font: 11px/1.5 var(--mono); }
+    .comment-list { display: grid; gap: 12px; margin: 18px 0 0; padding: 0; list-style: none; }
+    .comment-item { padding-top: 12px; border-top: 1px solid var(--line); }
+    .comment-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; color: var(--muted); font: 10px var(--mono); }
+    .comment-name { color: var(--ink); font-weight: 500; }
+    .comment-text { margin: 7px 0 0; color: var(--ink); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+    .no-comments { color: var(--muted); font-size: 13px; }
     .bottomline { min-height: 72px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
     .bottomline span:last-child { color: var(--ink); }
 
@@ -296,6 +372,8 @@
       .project-info { min-height: 310px; padding: 27px 24px 24px; }
       .project-info h3 { margin-top: 18px; font-size: 30px; }
       .projects { padding-bottom: 62px; }
+      .feedback { grid-template-columns: 1fr; gap: 12px; padding-bottom: 62px; }
+      .feedback-block { padding: 16px; }
     }
     @media (max-width: 420px) {
       .shell { width: calc(100% - 28px); }
@@ -321,6 +399,7 @@
     </a>
     <nav class="topnav" aria-label="Main navigation">
       <a href="#projects">Projects</a>
+      <a href="#feedback">Feedback</a>
       <a href="#about">About</a>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.463.402.807a6.5 6.5 0 0 0 8.268 8.268c.344-.215.829-.003.803.397Z"/></svg>
@@ -337,7 +416,7 @@
       </div>
       <div class="hero-note">
         <p>Little ideas, things I tried, and projects that escaped the notes app.</p>
-        <span class="project-count"><span class="count-dot" aria-hidden="true"></span><span id="project-count" aria-live="polite" aria-atomic="true">01 project so far</span></span>
+        <span class="project-count"><span class="count-dot" aria-hidden="true"></span><span id="project-count" aria-live="polite" aria-atomic="true">02 projects so far</span></span>
       </div>
     </section>
 
@@ -352,6 +431,7 @@
             <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
             <button class="filter" type="button" data-filter="python" aria-pressed="false">Python</button>
             <button class="filter" type="button" data-filter="cli" aria-pressed="false">CLI</button>
+            <button class="filter" type="button" data-filter="web" aria-pressed="false">Web</button>
           </div>
           <label class="search-wrap">
             <input id="project-search" class="search" type="search" placeholder="Search projects" aria-label="Search projects" autocomplete="off">
@@ -392,7 +472,79 @@
           </div>
         </div>
       </article>
+      <article class="project-card" data-tags="python web game" data-search="bank heist game story choices team jeff escape money python web browser">
+        <div class="project-visual" aria-label="Preview of the Bank Heist interactive story game">
+          <span class="preview-label">02 / Choose your next move</span>
+          <div class="terminal" aria-hidden="true">
+            <div class="terminal-top">
+              <span class="terminal-title">Bank Heist</span>
+              <span class="terminal-dots"><i></i><i></i><i></i></span>
+            </div>
+            <div class="terminal-copy">
+              <p class="muted">The team is waiting on your plan.</p>
+              <p>Choose an entrance:</p>
+              <p>1. Front</p>
+              <p>2. Back</p>
+              <p>3. Roof</p>
+              <p class="prompt">Your choice: 2<b></b></p>
+            </div>
+          </div>
+        </div>
+        <div class="project-info">
+          <span class="project-index">Project 002 &nbsp; / &nbsp; Python</span>
+          <h3>Bank Heist</h3>
+          <p class="project-description">A choice-based story game inspired by a Python project. Pick your team, plan a route, and see how the heist turns out.</p>
+          <div class="tag-list" aria-label="Technologies">
+            <span class="tag">Python</span>
+            <span class="tag">Browser game</span>
+            <span class="tag">Interactive story</span>
+          </div>
+          <div class="project-bottom">
+            <a class="run-link" href="./heist.html">Play project <span aria-hidden="true">→</span></a>
+            <a class="source-link" href="https://github.com/Crashtest5812/Random/blob/main/Heist" target="_blank" rel="noopener noreferrer">Read the source <span class="arrow" aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </article>
       <div id="empty-state" class="empty-state" role="status">No projects match that search.</div>
+    </section>
+
+    <section id="feedback" class="feedback" aria-labelledby="feedback-title">
+      <div class="feedback-intro">
+        <p class="section-kicker">Your thoughts</p>
+        <h2 id="feedback-title">Rate &amp; comment</h2>
+        <p>Rate the projects and leave a comment for everyone to see. Please do not share private information.</p>
+      </div>
+      <div class="feedback-panel">
+        <section class="feedback-block" aria-labelledby="rating-title">
+          <h3 id="rating-title">Rate the projects</h3>
+          <p class="rating-summary" id="rating-summary" aria-live="polite">Loading community rating...</p>
+          <form id="rating-form">
+            <fieldset class="rating-options">
+              <legend class="sr-only">Choose a rating from one to five stars</legend>
+              <label class="rating-option"><input type="radio" name="rating" value="1" aria-label="1 star" required><span aria-hidden="true">★</span></label>
+              <label class="rating-option"><input type="radio" name="rating" value="2" aria-label="2 stars"><span aria-hidden="true">★★</span></label>
+              <label class="rating-option"><input type="radio" name="rating" value="3" aria-label="3 stars"><span aria-hidden="true">★★★</span></label>
+              <label class="rating-option"><input type="radio" name="rating" value="4" aria-label="4 stars"><span aria-hidden="true">★★★★</span></label>
+              <label class="rating-option"><input type="radio" name="rating" value="5" aria-label="5 stars"><span aria-hidden="true">★★★★★</span></label>
+            </fieldset>
+            <button class="feedback-submit" type="submit">Save rating</button>
+            <p class="feedback-status" id="rating-status" role="status"></p>
+          </form>
+        </section>
+        <section class="feedback-block" aria-labelledby="comments-title">
+          <h3 id="comments-title">Comments</h3>
+          <p class="feedback-note">Comments are public. Showing the 50 most recent.</p>
+          <form class="feedback-form" id="comment-form">
+            <label class="sr-only" for="comment-name">Your name (optional)</label>
+            <input class="feedback-input" id="comment-name" name="name" type="text" maxlength="40" placeholder="Your name (optional)" autocomplete="name">
+            <label class="sr-only" for="comment-text">Write a comment</label>
+            <textarea class="feedback-textarea" id="comment-text" name="comment" maxlength="500" required placeholder="Write a comment (up to 500 characters)"></textarea>
+            <button class="feedback-submit" type="submit">Post comment</button>
+            <p class="feedback-status" id="comment-status" role="status"></p>
+          </form>
+          <ul class="comment-list" id="comment-list" aria-live="polite"><li class="no-comments">Loading comments...</li></ul>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -401,6 +553,7 @@
     <span>More soon <span aria-hidden="true">↗</span></span>
   </footer>
 
+  <script src="./supabase-config.js"></script>
   <script>
     const filterButtons = [...document.querySelectorAll(".filter")];
     const projectCards = [...document.querySelectorAll(".project-card")];
@@ -409,7 +562,198 @@
     const projectCount = document.querySelector("#project-count");
     const themeToggle = document.querySelector("#theme-toggle");
     const themeColor = document.querySelector('meta[name="theme-color"]');
+    const ratingForm = document.querySelector("#rating-form");
+    const ratingSummary = document.querySelector("#rating-summary");
+    const ratingStatus = document.querySelector("#rating-status");
+    const commentForm = document.querySelector("#comment-form");
+    const commentName = document.querySelector("#comment-name");
+    const commentText = document.querySelector("#comment-text");
+    const commentStatus = document.querySelector("#comment-status");
+    const commentList = document.querySelector("#comment-list");
+    const feedbackStorageKey = "random-projects-voter-id";
     let activeFilter = "all";
+    const supabaseConfig = window.SUPABASE_CONFIG;
+    const supabaseUrl = supabaseConfig?.url?.replace(/\/+$/, "");
+    const supabaseKey = supabaseConfig?.publishableKey;
+
+    function setFeedbackUnavailable(message) {
+      ratingSummary.textContent = message;
+      ratingStatus.textContent = message;
+      commentStatus.textContent = message;
+      commentList.replaceChildren();
+      const notice = document.createElement("li");
+      notice.className = "no-comments";
+      notice.textContent = message;
+      commentList.append(notice);
+      for (const control of [...ratingForm.elements, ...commentForm.elements]) {
+        control.disabled = true;
+      }
+    }
+
+    function hasSupabaseConfig() {
+      return typeof supabaseUrl === "string" &&
+        /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(supabaseUrl) &&
+        typeof supabaseKey === "string" &&
+        supabaseKey.length > 10 &&
+        !supabaseKey.includes("YOUR_");
+    }
+
+    async function supabaseRequest(path, options = {}) {
+      const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          apikey: supabaseKey,
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`Supabase request failed (${response.status}): ${detail}`);
+      }
+      if (response.status === 204) return null;
+      return response.json();
+    }
+
+    async function getVoterId() {
+      let voterId;
+      try {
+        voterId = localStorage.getItem(feedbackStorageKey);
+        if (!voterId) {
+          voterId = crypto.randomUUID();
+          localStorage.setItem(feedbackStorageKey, voterId);
+        }
+      } catch (error) {
+        throw new Error("This browser could not save your rating ID. Enable browser storage and try again.", { cause: error });
+      }
+      return voterId;
+    }
+
+    async function loadFeedback() {
+      try {
+        const [summary, comments] = await Promise.all([
+          supabaseRequest("rpc/get_project_rating_summary", { method: "POST", body: "{}" }),
+          supabaseRequest("project_comments?select=id,name,body,created_at&order=created_at.desc&limit=50"),
+        ]);
+        const rating = Array.isArray(summary) ? summary[0] : summary;
+        const average = Number(rating?.average_rating ?? 0);
+        const count = Number(rating?.rating_count ?? 0);
+        ratingSummary.textContent = count
+          ? `Community rating: ${average.toFixed(1)} / 5 from ${count} ${count === 1 ? "rating" : "ratings"}.`
+          : "No ratings yet. Be the first to rate the projects.";
+        renderComments(comments);
+      } catch (error) {
+        console.error("Could not load shared project feedback.", error);
+        const message = "Could not load shared feedback. Check Supabase setup and reload the page.";
+        ratingSummary.textContent = message;
+        ratingStatus.textContent = message;
+        commentStatus.textContent = message;
+        commentList.replaceChildren();
+        const notice = document.createElement("li");
+        notice.className = "no-comments";
+        notice.textContent = message;
+        commentList.append(notice);
+      }
+    }
+
+    function renderComments(comments) {
+      commentList.replaceChildren();
+      if (comments.length === 0) {
+        const emptyComment = document.createElement("li");
+        emptyComment.className = "no-comments";
+        emptyComment.textContent = "No comments yet. Be the first to share a thought.";
+        commentList.append(emptyComment);
+        return;
+      }
+
+      for (const comment of comments) {
+        const item = document.createElement("li");
+        item.className = "comment-item";
+        const meta = document.createElement("div");
+        meta.className = "comment-meta";
+        const name = document.createElement("span");
+        name.className = "comment-name";
+        name.textContent = comment.name || "Anonymous";
+        const date = document.createElement("time");
+        const createdAt = new Date(comment.created_at);
+        date.dateTime = comment.created_at;
+        date.textContent = Number.isNaN(createdAt.valueOf()) ? "" : createdAt.toLocaleDateString();
+        meta.append(name, date);
+        const text = document.createElement("p");
+        text.className = "comment-text";
+        text.textContent = comment.body;
+        item.append(meta, text);
+        commentList.append(item);
+      }
+    }
+
+    ratingForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const selected = ratingForm.querySelector('input[name="rating"]:checked');
+      if (!selected) {
+        ratingStatus.textContent = "Choose a star rating before saving.";
+        return;
+      }
+
+      const submitButton = ratingForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      ratingStatus.textContent = "Saving your rating...";
+      try {
+        const voterId = await getVoterId();
+        await supabaseRequest("rpc/submit_project_rating", {
+          method: "POST",
+          body: JSON.stringify({ p_voter_id: voterId, p_rating: Number(selected.value) }),
+        });
+        ratingStatus.textContent = "Your rating was saved for everyone to see.";
+        await loadFeedback();
+      } catch (error) {
+        console.error("Could not save project rating.", error);
+        ratingStatus.textContent = error.message.includes("browser could not save")
+          ? error.message
+          : "Could not save your rating. Check the Supabase setup and try again.";
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    commentForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = commentText.value.trim();
+      if (!text) {
+        commentStatus.textContent = "Write a comment before posting.";
+        commentText.focus();
+        return;
+      }
+
+      const submitButton = commentForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      commentStatus.textContent = "Posting your comment...";
+      try {
+        await supabaseRequest("project_comments", {
+          method: "POST",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify({
+            name: commentName.value.trim() || "Anonymous",
+            body: text,
+          }),
+        });
+        commentText.value = "";
+        commentStatus.textContent = "Your comment is now visible to everyone.";
+        await loadFeedback();
+      } catch (error) {
+        console.error("Could not post project comment.", error);
+        commentStatus.textContent = "Could not post your comment. Check the Supabase setup and try again.";
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    if (hasSupabaseConfig()) {
+      loadFeedback();
+    } else {
+      setFeedbackUnavailable("Add your Supabase project URL and publishable key in supabase-config.js to enable shared feedback.");
+    }
 
     function setTheme(theme, save = true) {
       const isDark = theme === "dark";
