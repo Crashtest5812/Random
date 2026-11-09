@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0c0c">
+  <meta name="description" content="Browse the store, choose items by number, and check out in a browser demo.">
+  <title>The Store — Random Projects</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      background: #0c0c0c;
+      color: #e6e6e6;
+      font-size: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; }
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2px solid #9bce9b;
+      outline-offset: 3px;
+    }
+    .terminal {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 900px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #101010;
+      border-inline: 1px solid #292929;
+    }
+    .terminal-header {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 0 20px;
+      border-bottom: 1px solid #292929;
+      color: #a5a5a5;
+      font-size: 12px;
+    }
+    .terminal-title { color: #dedede; }
+    .home-link { color: #a5a5a5; text-decoration: none; }
+    .home-link:hover { color: #fff; }
+    .run-again, .music-toggle {
+      min-height: 32px;
+      border: 1px solid #454545;
+      padding: 5px 9px;
+      background: #171717;
+      color: #bbb;
+      cursor: pointer;
+      font: inherit;
+    }
+    .run-again:hover, .music-toggle:hover, .music-toggle[aria-pressed="true"] {
+      border-color: #9bce9b;
+      color: #d3f0d3;
+    }
+    .screen { flex: 1; padding: 22px 20px; overflow: auto; }
+    #output {
+      margin: 0;
+      color: #dedede;
+      font: inherit;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .input-line {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+      margin-top: 2px;
+      line-height: 1.65;
+    }
+    .input-prompt { flex: 0 0 auto; color: #a5a5a5; }
+    .terminal-input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      padding: 0;
+      background: transparent;
+      color: #e6e6e6;
+      caret-color: #e6e6e6;
+      font: inherit;
+    }
+    .terminal-input:focus-visible { outline: 1px solid #777; outline-offset: 3px; }
+    .terminal-input:disabled { opacity: 0.7; }
+    .note { margin: 0; padding: 12px 20px; border-top: 1px solid #292929; color: #999; font-size: 11px; }
+    @media (max-width: 520px) {
+      :root { font-size: 13px; }
+      .screen { padding: 16px 12px; }
+      .terminal-header { padding: 8px 12px; }
+      .note { padding-inline: 12px; }
+    }
+  </style>
+</head>
+<body data-music-track="../assets/Coffee.mp3">
+  <main class="terminal" aria-label="Store browser demo">
+    <header class="terminal-header">
+      <a class="home-link" href="./index.html">← All projects</a>
+      <span class="terminal-title">python Store.py</span>
+      <button class="music-toggle" type="button" data-site-music-toggle aria-pressed="false">Music: off</button>
+      <span data-site-music-status role="status" aria-live="polite"></span>
+      <button class="run-again" id="run-again" type="button">Start over</button>
+    </header>
+    <section class="screen" aria-label="Store output">
+      <pre id="output" aria-live="polite"></pre>
+      <form class="input-line" id="input-form" hidden>
+        <label class="input-prompt" id="input-prompt" for="terminal-input"></label>
+        <input class="terminal-input" id="terminal-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="Enter a number">
+      </form>
+    </section>
+    <p class="note">This is a browser demo. Checkout and payment are simulated; no purchase is made.</p>
+  </main>
+  <script>
+    const categories = {
+      Produce: {
+        Apples: 0.5, Bananas: 0.3, Oranges: 0.7, Grapes: 1, Watermelons: 3,
+      },
+      Deli: {
+        Turkey: 4, Ham: 3.5, Pepperoni: 5, Salami: 4.5, Pastrami: 6,
+        "American Cheese": 2, Pepperjack: 2.5, Colbyjack: 2, Swiss: 2,
+      },
+      Bakery: {
+        Bread: 2, Bagels: 1.5, Croissants: 2.5, Muffins: 2, Donuts: 1,
+        Cookies: 1.5, Rolls: 1,
+      },
+      Cereal: {
+        Cheerios: 3, "Frosted Flakes": 3.5, "Cocoa Puffs": 4, "Raisin Bran": 3,
+        "Cinnamon Toast Crunch": 3.5,
+      },
+      Snacks: {
+        "20Oz-Chips": 2, "16Oz-Chips": 1.5, "12Oz-Chips": 1,
+        "Box-12Oz-Chips": 6, Pretzels: 1.5, "Pork Rinds": 2,
+        "Spicy Pork Rinds": 2.5, Popcorn: 2.5, "Trail Mix": 3, "Granola Bars": 1.5,
+      },
+      Freezer: {
+        "Frozen Pizza": 5, "Frozen Vegetables": 3, "Frozen Dinners": 6,
+        "Frozen Fish": 7, "Frozen Waffles": 4, "Frozen Burritos": 5,
+        "Ice Cream": 4, "Frozen Fruit": 4, "Frozen Cakes": 5, Ice: 2, Popsicles: 3,
+      },
+      Beverages: {
+        Soda: 1.5, Juice: 2, Water: 1, Tea: 1.5, "Iced Coffee": 2,
+        "Energy Drinks": 3, "Sports Drinks": 2.5, "Sparkling Water": 1.5,
+        Gatorade: 2, "Vitamin Water": 2.5,
+      },
+      Dairy: {
+        Milk: 2, "Almond Milk": 3, "Soy Milk": 3, "Coconut Milk": 3, Cheese: 3,
+        Yogurt: 1.5, "Coconut Yogurt": 2, Yoplait: 1.5, "Greek Yogurt": 2,
+        Butter: 2.5, "Cream Cheese": 2, "Sour Cream": 1.5,
+      },
+      Meat: {
+        Chicken: 5, Beef: 7, Pork: 6, Lamb: 8, Bacon: 4, Sausage: 5,
+        "Ground Beef": 6, "Ground Turkey": 5, "Ground Chicken": 5, "Ground Pork": 6,
+        Steak: 10, Ribeye: 12, Ribs: 9, Chops: 8, Roasts: 12,
+      },
+    };
+    const output = document.querySelector("#output");
+    const inputForm = document.querySelector("#input-form");
+    const inputPrompt = document.querySelector("#input-prompt");
+    const terminalInput = document.querySelector("#terminal-input");
+    const runAgain = document.querySelector("#run-again");
+    const screen = document.querySelector(".screen");
+    let responseHandler;
+    let cart;
+    let selectedCategory;
+
+    function print(text = "") {
+      output.append(document.createTextNode(`${text}\n`));
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    function prompt(text, handler) {
+      inputPrompt.textContent = text;
+      responseHandler = handler;
+      inputForm.hidden = false;
+      terminalInput.disabled = false;
+      terminalInput.value = "";
+      terminalInput.focus();
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    function finish() {
+      inputForm.hidden = true;
+      terminalInput.disabled = true;
+      runAgain.focus();
+    }
+
+    function money(amount) {
+      return `$${amount.toFixed(2)}`;
+    }
+
+    function showCategories() {
+      const names = Object.keys(categories);
+      print("Choose a category to browse:");
+      names.forEach((name, index) => print(`${index + 1}. ${name}`));
+      prompt("Enter the number of your choice: ", (answer) => {
+        const index = Number(answer) - 1;
+        if (!Number.isInteger(index) || index < 0 || index >= names.length) {
+          print("That is not a valid category.");
+          showCategories();
+          return;
+        }
+        selectedCategory = names[index];
+        showItems();
+      });
+    }
+
+    function showItems() {
+      const entries = Object.entries(categories[selectedCategory]);
+      print(`Here are the items in ${selectedCategory}:`);
+      entries.forEach(([name, price], index) => {
+        print(`${index + 1}. ${name} - ${money(price)}`);
+      });
+      prompt("Enter the number of the item to add: ", (answer) => {
+        const index = Number(answer) - 1;
+        if (!Number.isInteger(index) || index < 0 || index >= entries.length) {
+          print("That is not a valid item number.");
+          showItems();
+          return;
+        }
+        const [name, price] = entries[index];
+        cart.push({ name, price });
+        print(`${name} added to cart.`);
+        print(`Your cart contains: ${cart.map((item) => item.name).join(", ")}`);
+        showCartActions();
+      });
+    }
+
+    function showCartActions() {
+      prompt("Enter 1 to add another item, 2 to browse another category, or 3 to checkout: ", (choice) => {
+        if (choice === "1") {
+          showItems();
+        } else if (choice === "2") {
+          showCategories();
+        } else if (choice === "3") {
+          checkout();
+        } else {
+          print("Please choose 1 (add), 2 (browse), or 3 (checkout).");
+          showCartActions();
+        }
+      });
+    }
+
+    function checkout() {
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      print("Proceeding to checkout...");
+      print("Here is your receipt:");
+      cart.forEach((item) => print(`${item.name} - ${money(item.price)}`));
+      print(`Total: ${money(total)}`);
+      prompt("Enter 1 for cash or 2 for card: ", (payment) => {
+        if (payment === "1") {
+          print("Cash payment selected (simulated).");
+        } else if (payment === "2") {
+          print("Card payment selected (simulated).");
+        } else {
+          print("Invalid payment method.");
+        }
+        print("Thank you for shopping with us!");
+        finish();
+      });
+    }
+
+    function start() {
+      output.textContent = "";
+      cart = [];
+      selectedCategory = "";
+      print("$ python Store.py");
+      print("Welcome to the Store!");
+      print("We have a variety of items for sale.");
+      showCategories();
+    }
+
+    inputForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!responseHandler) return;
+      const answer = terminalInput.value.trim();
+      const handler = responseHandler;
+      responseHandler = undefined;
+      print(`${inputPrompt.textContent}${answer}`);
+      inputForm.hidden = true;
+      terminalInput.disabled = true;
+      handler(answer);
+    });
+
+    runAgain.addEventListener("click", start);
+    start();
+  </script>
+  <script src="./music.js"></script>
+</body>
+</html>
